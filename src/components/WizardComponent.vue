@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useWizard } from './useWizard';
-import type { WizardConfig } from './types';
+import { ref, onMounted, computed } from 'vue';
+import { useWizard } from '../composables/useWizard';
+import type { WizardConfig } from '../types';
 
 // Props
 const props = defineProps<{
@@ -24,7 +24,7 @@ const loadError = ref<string | null>(null);
 const loadConfig = async () => {
   try {
     isLoading.value = true;
-    
+
     if (props.config) {
       wizardConfig.value = props.config;
     } else if (props.configUrl) {
@@ -103,10 +103,7 @@ const handleCancel = () => {
       <!-- Progress Bar -->
       <div class="wizard-progress">
         <div class="progress-bar">
-          <div 
-            class="progress-fill" 
-            :style="{ width: `${wizard.progress.value.percentage}%` }"
-          ></div>
+          <div class="progress-fill" :style="{ width: `${wizard.progress.value.percentage}%` }"></div>
         </div>
         <p class="progress-text">
           Question {{ wizard.progress.value.current }} of {{ wizard.progress.value.total }}
@@ -135,7 +132,7 @@ const handleCancel = () => {
             {{ wizard.currentQuestion.value.question }}
             <span v-if="wizard.currentQuestion.value.required" class="required-indicator">*</span>
           </h2>
-          
+
           <p v-if="wizard.currentQuestion.value.helpText" class="help-text">
             {{ wizard.currentQuestion.value.helpText }}
           </p>
@@ -143,11 +140,8 @@ const handleCancel = () => {
           <!-- Boolean (Toggle Switch) -->
           <div v-if="wizard.currentQuestion.value.type === 'boolean'" class="input-boolean">
             <label class="toggle-switch">
-              <input 
-                type="checkbox"
-                :checked="wizard.currentAnswer.value"
-                @change="wizard.updateAnswer($event.target.checked)"
-              />
+              <input type="checkbox" :checked="wizard.currentAnswer.value"
+                @change="wizard.updateAnswer($event.target.checked)" />
               <span class="toggle-slider"></span>
               <span class="toggle-label">
                 {{ wizard.currentAnswer.value ? 'Yes' : 'No' }}
@@ -159,40 +153,24 @@ const handleCancel = () => {
           <div v-else-if="wizard.currentQuestion.value.type === 'multiple-choice'" class="input-multiple-choice">
             <!-- Single Select -->
             <div v-if="!wizard.currentQuestion.value.allowMultiple" class="radio-group">
-              <label 
-                v-for="option in wizard.currentQuestion.value.options" 
-                :key="option.value"
-                class="radio-option"
-              >
-                <input 
-                  type="radio"
-                  :value="option.value"
-                  :checked="wizard.currentAnswer.value === option.value"
-                  @change="wizard.updateAnswer(option.value)"
-                />
+              <label v-for="option in wizard.currentQuestion.value.options" :key="option.value" class="radio-option">
+                <input type="radio" :value="option.value" :checked="wizard.currentAnswer.value === option.value"
+                  @change="wizard.updateAnswer(option.value)" />
                 <span>{{ option.label }}</span>
               </label>
             </div>
 
             <!-- Multiple Select -->
             <div v-else class="checkbox-group">
-              <label 
-                v-for="option in wizard.currentQuestion.value.options" 
-                :key="option.value"
-                class="checkbox-option"
-              >
-                <input 
-                  type="checkbox"
-                  :value="option.value"
-                  :checked="(wizard.currentAnswer.value || []).includes(option.value)"
-                  @change="(e) => {
+              <label v-for="option in wizard.currentQuestion.value.options" :key="option.value" class="checkbox-option">
+                <input type="checkbox" :value="option.value"
+                  :checked="(wizard.currentAnswer.value || []).includes(option.value)" @change="(e) => {
                     const current = wizard.currentAnswer.value || [];
                     const newValue = e.target.checked
                       ? [...current, option.value]
                       : current.filter(v => v !== option.value);
                     wizard.updateAnswer(newValue);
-                  }"
-                />
+                  }" />
                 <span>{{ option.label }}</span>
               </label>
             </div>
@@ -200,25 +178,16 @@ const handleCancel = () => {
 
           <!-- Text Input -->
           <div v-else-if="wizard.currentQuestion.value.type === 'text'" class="input-text">
-            <textarea
-              :value="wizard.currentAnswer.value || ''"
-              @input="wizard.updateAnswer($event.target.value)"
-              :placeholder="wizard.currentQuestion.value.helpText"
-              rows="4"
-              class="text-input"
-            ></textarea>
+            <textarea :value="wizard.currentAnswer.value || ''" @input="wizard.updateAnswer($event.target.value)"
+              :placeholder="wizard.currentQuestion.value.helpText" rows="4" class="text-input"></textarea>
           </div>
 
           <!-- Number Input -->
           <div v-else-if="wizard.currentQuestion.value.type === 'number'" class="input-number">
-            <input
-              type="number"
-              :value="wizard.currentAnswer.value || ''"
+            <input type="number" :value="wizard.currentAnswer.value || ''"
               @input="wizard.updateAnswer(Number($event.target.value))"
-              :min="wizard.currentQuestion.value.validation?.min"
-              :max="wizard.currentQuestion.value.validation?.max"
-              class="number-input"
-            />
+              :min="wizard.currentQuestion.value.validation?.min" :max="wizard.currentQuestion.value.validation?.max"
+              class="number-input" />
           </div>
 
           <!-- Number Range -->
@@ -226,44 +195,28 @@ const handleCancel = () => {
             <div class="range-inputs">
               <div class="range-input-group">
                 <label>Minimum</label>
-                <input
-                  type="number"
-                  :value="wizard.currentAnswer.value?.min || ''"
-                  @input="wizard.updateAnswer({ 
-                    ...wizard.currentAnswer.value,
-                    min: Number($event.target.value) 
-                  })"
-                  :min="wizard.currentQuestion.value.validation?.min"
-                  :max="wizard.currentQuestion.value.validation?.max"
-                  class="number-input"
-                />
+                <input type="number" :value="wizard.currentAnswer.value?.min || ''" @input="wizard.updateAnswer({
+                  ...wizard.currentAnswer.value,
+                  min: Number($event.target.value)
+                })" :min="wizard.currentQuestion.value.validation?.min"
+                  :max="wizard.currentQuestion.value.validation?.max" class="number-input" />
               </div>
               <div class="range-separator">-</div>
               <div class="range-input-group">
                 <label>Maximum</label>
-                <input
-                  type="number"
-                  :value="wizard.currentAnswer.value?.max || ''"
-                  @input="wizard.updateAnswer({ 
-                    ...wizard.currentAnswer.value,
-                    max: Number($event.target.value) 
-                  })"
-                  :min="wizard.currentQuestion.value.validation?.min"
-                  :max="wizard.currentQuestion.value.validation?.max"
-                  class="number-input"
-                />
+                <input type="number" :value="wizard.currentAnswer.value?.max || ''" @input="wizard.updateAnswer({
+                  ...wizard.currentAnswer.value,
+                  max: Number($event.target.value)
+                })" :min="wizard.currentQuestion.value.validation?.min"
+                  :max="wizard.currentQuestion.value.validation?.max" class="number-input" />
               </div>
             </div>
           </div>
 
           <!-- Date Input -->
           <div v-else-if="wizard.currentQuestion.value.type === 'date'" class="input-date">
-            <input
-              type="date"
-              :value="wizard.currentAnswer.value || ''"
-              @input="wizard.updateAnswer($event.target.value)"
-              class="date-input"
-            />
+            <input type="date" :value="wizard.currentAnswer.value || ''"
+              @input="wizard.updateAnswer($event.target.value)" class="date-input" />
           </div>
 
           <!-- Date Range -->
@@ -271,28 +224,18 @@ const handleCancel = () => {
             <div class="range-inputs">
               <div class="range-input-group">
                 <label>Start Date</label>
-                <input
-                  type="date"
-                  :value="wizard.currentAnswer.value?.start || ''"
-                  @input="wizard.updateAnswer({ 
-                    ...wizard.currentAnswer.value,
-                    start: $event.target.value 
-                  })"
-                  class="date-input"
-                />
+                <input type="date" :value="wizard.currentAnswer.value?.start || ''" @input="wizard.updateAnswer({
+                  ...wizard.currentAnswer.value,
+                  start: $event.target.value
+                })" class="date-input" />
               </div>
               <div class="range-separator">to</div>
               <div class="range-input-group">
                 <label>End Date</label>
-                <input
-                  type="date"
-                  :value="wizard.currentAnswer.value?.end || ''"
-                  @input="wizard.updateAnswer({ 
-                    ...wizard.currentAnswer.value,
-                    end: $event.target.value 
-                  })"
-                  class="date-input"
-                />
+                <input type="date" :value="wizard.currentAnswer.value?.end || ''" @input="wizard.updateAnswer({
+                  ...wizard.currentAnswer.value,
+                  end: $event.target.value
+                })" class="date-input" />
               </div>
             </div>
           </div>
@@ -305,26 +248,15 @@ const handleCancel = () => {
 
         <!-- Navigation Buttons -->
         <div class="wizard-navigation">
-          <button 
-            @click="handleBack"
-            :disabled="!wizard.canGoPrevious.value"
-            class="btn btn-secondary"
-          >
+          <button @click="handleBack" :disabled="!wizard.canGoPrevious.value" class="btn btn-secondary">
             Back
           </button>
 
-          <button 
-            v-if="!wizard.currentQuestion.value.required"
-            @click="wizard.skipQuestion()"
-            class="btn btn-text"
-          >
+          <button v-if="!wizard.currentQuestion.value.required" @click="wizard.skipQuestion()" class="btn btn-text">
             Skip
           </button>
 
-          <button 
-            @click="handleNext"
-            class="btn btn-primary"
-          >
+          <button @click="handleNext" class="btn btn-primary">
             {{ wizard.canGoNext.value ? 'Next' : 'Finish' }}
           </button>
         </div>
@@ -358,8 +290,13 @@ const handleCancel = () => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error-message {
@@ -452,7 +389,7 @@ const handleCancel = () => {
   transition: background-color 0.3s;
 }
 
-.toggle-switch input:checked + .toggle-slider {
+.toggle-switch input:checked+.toggle-slider {
   background-color: #3498db;
 }
 
@@ -468,7 +405,7 @@ const handleCancel = () => {
   transition: transform 0.3s;
 }
 
-.toggle-switch input:checked + .toggle-slider::before {
+.toggle-switch input:checked+.toggle-slider::before {
   transform: translateX(24px);
 }
 
