@@ -1,0 +1,160 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "wizardId": {
+      "type": "string",
+      "description": "Unique identifier for this wizard"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the wizard"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description shown at the start"
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Question"
+      }
+    }
+  },
+  "required": ["wizardId", "title", "questions"],
+  "definitions": {
+    "Question": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique question identifier"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "multiple-choice",
+            "boolean",
+            "text",
+            "number",
+            "number-range",
+            "date",
+            "date-range"
+          ]
+        },
+        "question": {
+          "type": "string",
+          "description": "The question text to display"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "helpText": {
+          "type": "string",
+          "description": "Optional help text displayed below the question"
+        },
+        "options": {
+          "type": "array",
+          "description": "For multiple-choice questions",
+          "items": {
+            "$ref": "#/definitions/Option"
+          }
+        },
+        "allowMultiple": {
+          "type": "boolean",
+          "description": "For multiple-choice: allow selecting multiple options",
+          "default": false
+        },
+        "validation": {
+          "$ref": "#/definitions/Validation"
+        },
+        "conditionalQuestions": {
+          "type": "array",
+          "description": "Follow-up questions based on answers",
+          "items": {
+            "$ref": "#/definitions/ConditionalQuestion"
+          }
+        }
+      },
+      "required": ["id", "type", "question"]
+    },
+    "Option": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "The value stored when selected"
+        },
+        "label": {
+          "type": "string",
+          "description": "The display text for this option"
+        }
+      },
+      "required": ["value", "label"]
+    },
+    "Validation": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "type": "number",
+          "description": "Minimum value for number/number-range"
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum value for number/number-range"
+        },
+        "minLength": {
+          "type": "number",
+          "description": "Minimum character length for text"
+        },
+        "maxLength": {
+          "type": "number",
+          "description": "Maximum character length for text"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern for text validation"
+        },
+        "minDate": {
+          "type": "string",
+          "description": "Minimum date (ISO format or 'today')"
+        },
+        "maxDate": {
+          "type": "string",
+          "description": "Maximum date (ISO format or 'today')"
+        },
+        "customMessage": {
+          "type": "string",
+          "description": "Custom validation error message"
+        }
+      }
+    },
+    "ConditionalQuestion": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "$ref": "#/definitions/Condition"
+        },
+        "question": {
+          "$ref": "#/definitions/Question"
+        }
+      },
+      "required": ["condition", "question"]
+    },
+    "Condition": {
+      "type": "object",
+      "properties": {
+        "operator": {
+          "type": "string",
+          "enum": ["equals", "contains", "greaterThan", "lessThan", "between"],
+          "description": "How to evaluate the condition"
+        },
+        "value": {
+          "description": "The value(s) to compare against"
+        }
+      },
+      "required": ["operator", "value"]
+    }
+  }
+}

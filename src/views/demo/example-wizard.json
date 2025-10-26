@@ -1,0 +1,119 @@
+{
+  "wizardId": "user-preferences-survey",
+  "title": "User Preferences Survey",
+  "description": "Help us understand your preferences",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "boolean",
+      "question": "Are you currently employed?",
+      "required": true,
+      "conditionalQuestions": [
+        {
+          "condition": {
+            "operator": "equals",
+            "value": true
+          },
+          "question": {
+            "id": "q1a",
+            "type": "multiple-choice",
+            "question": "What is your employment type?",
+            "required": true,
+            "options": [
+              { "value": "full-time", "label": "Full-time" },
+              { "value": "part-time", "label": "Part-time" },
+              { "value": "contract", "label": "Contract" },
+              { "value": "freelance", "label": "Freelance" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "question": "Which programming languages do you use?",
+      "required": true,
+      "allowMultiple": true,
+      "helpText": "Select all that apply",
+      "options": [
+        { "value": "javascript", "label": "JavaScript" },
+        { "value": "typescript", "label": "TypeScript" },
+        { "value": "python", "label": "Python" },
+        { "value": "java", "label": "Java" },
+        { "value": "csharp", "label": "C#" },
+        { "value": "other", "label": "Other" }
+      ],
+      "conditionalQuestions": [
+        {
+          "condition": {
+            "operator": "contains",
+            "value": "other"
+          },
+          "question": {
+            "id": "q2a",
+            "type": "text",
+            "question": "Please specify other programming languages",
+            "required": true,
+            "validation": {
+              "minLength": 2,
+              "maxLength": 200
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "q3",
+      "type": "number-range",
+      "question": "What is your preferred salary range (in thousands)?",
+      "required": false,
+      "helpText": "Enter your minimum and maximum expected salary",
+      "validation": {
+        "min": 0,
+        "max": 500
+      }
+    },
+    {
+      "id": "q4",
+      "type": "date-range",
+      "question": "When are you available to start?",
+      "required": true,
+      "helpText": "Select your availability window",
+      "validation": {
+        "minDate": "today"
+      }
+    },
+    {
+      "id": "q5",
+      "type": "text",
+      "question": "Tell us about yourself",
+      "required": false,
+      "helpText": "Share your background and interests (minimum 50 characters)",
+      "validation": {
+        "minLength": 50,
+        "maxLength": 1000
+      }
+    },
+    {
+      "id": "q6",
+      "type": "number",
+      "question": "How many years of experience do you have?",
+      "required": true,
+      "validation": {
+        "min": 0,
+        "max": 70,
+        "customMessage": "Please enter a valid number of years (0-70)"
+      }
+    },
+    {
+      "id": "q7",
+      "type": "date",
+      "question": "What is your preferred start date?",
+      "required": true,
+      "validation": {
+        "minDate": "today"
+      }
+    }
+  ]
+}
