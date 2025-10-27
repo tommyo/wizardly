@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import QuestionnaireEditor from './QuestionnaireEditor.vue';
-import type { WizardConfig } from './types';
+import QuestionnaireEditor from '../../admin/QuestionnaireEditor.vue';
+import type { WizardConfig } from '../../../types';
 
 // State
 const showEditor = ref(false);
@@ -72,7 +72,7 @@ function editQuestionnaire(questionnaire: WizardConfig) {
 
 function handleSave(config: WizardConfig) {
   console.log('Saving questionnaire:', config);
-  
+
   // Placeholder for actual save logic
   // In a real app, this would call an API
   // await fetch('/api/questionnaires', {
@@ -80,7 +80,7 @@ function handleSave(config: WizardConfig) {
   //   headers: { 'Content-Type': 'application/json' },
   //   body: JSON.stringify(config)
   // });
-  
+
   // Update local state for demonstration
   const index = savedQuestionnaires.value.findIndex(q => q.wizardId === config.wizardId);
   if (index >= 0) {
@@ -88,7 +88,7 @@ function handleSave(config: WizardConfig) {
   } else {
     savedQuestionnaires.value.push(config);
   }
-  
+
   showEditor.value = false;
   alert('Questionnaire saved successfully!');
 }
@@ -111,30 +111,26 @@ function loadSampleQuestionnaire() {
 }
 
 // Placeholder functions for API integration
-async function loadQuestionnairesFromAPI() {
-  console.log('Loading questionnaires from API...');
-  // TODO: Implement API call
-  // const response = await fetch('/api/questionnaires');
-  // savedQuestionnaires.value = await response.json();
-}
+// async function loadQuestionnairesFromAPI() {
+//   console.log('Loading questionnaires from API...');
+//   // TODO: Implement API call
+//   // const response = await fetch('/api/questionnaires');
+//   // savedQuestionnaires.value = await response.json();
+// }
 
-async function loadQuestionnaireById(id: string) {
-  console.log('Loading questionnaire:', id);
-  // TODO: Implement API call
-  // const response = await fetch(`/api/questionnaires/${id}`);
-  // return await response.json();
-}
+// async function loadQuestionnaireById(id: string) {
+//   console.log('Loading questionnaire:', id);
+//   // TODO: Implement API call
+//   // const response = await fetch(`/api/questionnaires/${id}`);
+//   // return await response.json();
+// }
 </script>
 
 <template>
   <div class="app">
     <!-- Editor Mode -->
-    <QuestionnaireEditor
-      v-if="showEditor"
-      :initial-config="currentQuestionnaire"
-      @save="handleSave"
-      @cancel="handleCancel"
-    />
+    <QuestionnaireEditor v-if="showEditor" :initial-config="currentQuestionnaire" @save="handleSave"
+      @cancel="handleCancel" />
 
     <!-- List Mode -->
     <div v-else class="list-view">
@@ -153,26 +149,14 @@ async function loadQuestionnaireById(id: string) {
       <div class="list-content">
         <!-- Saved Questionnaires -->
         <div v-if="savedQuestionnaires.length > 0" class="questionnaires-grid">
-          <div
-            v-for="questionnaire in savedQuestionnaires"
-            :key="questionnaire.wizardId"
-            class="questionnaire-card"
-          >
+          <div v-for="questionnaire in savedQuestionnaires" :key="questionnaire.wizardId" class="questionnaire-card">
             <div class="card-header">
               <h3>{{ questionnaire.title }}</h3>
               <div class="card-actions">
-                <button
-                  @click="editQuestionnaire(questionnaire)"
-                  class="action-btn"
-                  title="Edit"
-                >
+                <button @click="editQuestionnaire(questionnaire)" class="action-btn" title="Edit">
                   ✏️
                 </button>
-                <button
-                  @click="deleteQuestionnaire(questionnaire.wizardId)"
-                  class="action-btn"
-                  title="Delete"
-                >
+                <button @click="deleteQuestionnaire(questionnaire.wizardId)" class="action-btn" title="Delete">
                   🗑️
                 </button>
               </div>

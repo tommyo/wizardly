@@ -3,21 +3,19 @@
 import type {
   WizardConfig,
   Question,
-  ConditionalQuestion,
   WizardState,
   ValidationResult,
   Answer,
-  NumberRange,
-  DateRange,
-  Validation,
   QuestionType,
   AnswerForQuestion,
-  TypedCondition
+  AnswerValue,
+  Condition
 } from './types';
+import { validateAnswer } from './validators';
 
 export class WizardEngine {
-  private config: WizardConfig;
-  private state: WizardState;
+  protected config: WizardConfig;
+  protected state: WizardState;
 
   constructor(config: WizardConfig) {
     this.config = config;
@@ -46,9 +44,12 @@ export class WizardEngine {
       if (q.conditionalQuestions && this.state.answers.has(q.id)) {
         const answer = this.state.answers.get(q.id);
 
-        for (const conditional of q.conditionalQuestions) {
-          if (this.evaluateCondition(conditional.condition, answer)) {
-            processQuestion(conditional.question);
+        // Only evaluate conditions if answer exists
+        if (answer !== undefined) {
+          for (const conditional of q.conditionalQuestions) {
+            if (this.evaluateCondition(conditional.condition, answer)) {
+              processQuestion(conditional.question);
+            }
           }
         }
       }
@@ -62,17 +63,17 @@ export class WizardEngine {
   }
 
   /**
-   * Evaluates a condition against an answer
-   * @deprecated Internal method - will be updated to use TypedCondition
+   * Evaluates a condition against an answer value.
+   * Supports all condition operators with type-safe evaluation.
    */
-  private evaluateCondition(condition: any, answer: any): boolean {
+  private evaluateCondition(condition: Condition, answer: AnswerValue): boolean {
     switch (condition.operator) {
       case 'equals':
         return answer === condition.value;
 
       case 'contains':
         if (Array.isArray(answer)) {
-          return answer.includes(condition.value);
+          return answer.includes(String(condition.value));
         }
         return answer === condition.value;
 
@@ -92,22 +93,6 @@ export class WizardEngine {
   }
 
   /**
-   * Type-safe condition evaluation.
-   * Evaluates a typed condition against an answer value.
-   *
-   * @example
-   * const condition: TypedCondition = { operator: 'greaterThan', value: 10 };
-   * const answer = 15;
-   * const result = engine.evaluateConditionTyped(condition, answer);
-   */
-  evaluateConditionTyped<T extends QuestionType>(
-    condition: TypedCondition,
-    answer: AnswerForQuestion<T>
-  ): boolean {
-    return this.evaluateCondition(condition, answer);
-  }
-
-  /**
    * Get the current question
    */
   getCurrentQuestion(): Question | null {
@@ -118,275 +103,44 @@ export class WizardEngine {
   }
 
   /**
-   * Get the current answer for the current question (if it exists)
-   * @deprecated Use getCurrentAnswerTyped for type safety
-   */
-  getCurrentAnswer(): any {
-    const question = this.getCurrentQuestion();
-    if (!question) return null;
-    return this.state.answers.get(question.id);
-  }
-
-  /**
    * Get the current answer with type safety based on question type.
    * Returns undefined if no answer exists.
    *
    * @example
    * const question = engine.getCurrentQuestion();
    * if (question && question.type === 'number-range') {
-   *   const answer = engine.getCurrentAnswerTyped(question as Question<'number-range'>);
+   *   const answer = engine.getCurrentAnswer(question as Question<'number-range'>);
    *   if (answer) {
    *     console.log(answer.min, answer.max); // Type-safe!
    *   }
    * }
    */
-  getCurrentAnswerTyped<T extends QuestionType>(
+  getCurrentAnswer<T extends QuestionType>(
     question: Question<T>
   ): AnswerForQuestion<T> | undefined {
     return this.state.answers.get(question.id) as AnswerForQuestion<T> | undefined;
   }
 
-  /**
-   * Validate an answer for a given question
-   * @deprecated Use validateAnswerTyped for type safety
-   */
-  validateAnswer(question: Question, answer: any): ValidationResult {
-    // Check if required
-    if (question.required && (answer === null || answer === undefined || answer === '')) {
-      return {
-        isValid: false,
-        errorMessage: 'This question is required'
-      };
-    }
-
-    // If not required and empty, it's valid
-    if (!question.required && (answer === null || answer === undefined || answer === '')) {
-      return { isValid: true };
-    }
-
-    // Type-specific validation
-    const validation = question.validation;
-    if (!validation) {
-      return { isValid: true };
-    }
-
-    switch (question.type) {
-      case 'text':
-        return this.validateText(answer, validation);
-
-      case 'number':
-        return this.validateNumber(answer, validation);
-
-      case 'number-range':
-        return this.validateNumberRange(answer, validation);
-
-      case 'date':
-        return this.validateDate(answer, validation);
-
-      case 'date-range':
-        return this.validateDateRange(answer, validation);
-
-      default:
-        return { isValid: true };
-    }
-  }
 
   /**
-   * Type-safe answer validation.
-   * Ensures the answer matches the expected type for the question.
+   * Answer the current question with type-safe validation.
+   * Validates and stores the answer, then rebuilds the question list to handle conditionals.
    *
    * @example
-   * const question: Question<'number-range'> = { ... };
-   * const answer: NumberRange = { min: 10, max: 20 };
-   * const result = engine.validateAnswerTyped(question, answer);
+   * const question = engine.getCurrentQuestion();
+   * if (question && question.type === 'number') {
+   *   const result = engine.answerCurrentQuestion(
+   *     question as Question<'number'>,
+   *     42
+   *   );
+   * }
    */
-  validateAnswerTyped<T extends QuestionType>(
+  answerCurrentQuestion<T extends QuestionType>(
     question: Question<T>,
     answer: AnswerForQuestion<T>
   ): ValidationResult {
-    return this.validateAnswer(question, answer);
-  }
-
-  private validateText(value: string, validation: Validation): ValidationResult {
-    if (validation.minLength && value.length < validation.minLength) {
-      return {
-        isValid: false,
-        errorMessage: validation.customMessage || `Minimum length is ${validation.minLength} characters`
-      };
-    }
-
-    if (validation.maxLength && value.length > validation.maxLength) {
-      return {
-        isValid: false,
-        errorMessage: validation.customMessage || `Maximum length is ${validation.maxLength} characters`
-      };
-    }
-
-    if (validation.pattern) {
-      const regex = new RegExp(validation.pattern);
-      if (!regex.test(value)) {
-        return {
-          isValid: false,
-          errorMessage: validation.customMessage || 'Invalid format'
-        };
-      }
-    }
-
-    return { isValid: true };
-  }
-
-  private validateNumber(value: number, validation: Validation): ValidationResult {
-    if (validation.min !== undefined && value < validation.min) {
-      return {
-        isValid: false,
-        errorMessage: validation.customMessage || `Minimum value is ${validation.min}`
-      };
-    }
-
-    if (validation.max !== undefined && value > validation.max) {
-      return {
-        isValid: false,
-        errorMessage: validation.customMessage || `Maximum value is ${validation.max}`
-      };
-    }
-
-    return { isValid: true };
-  }
-
-  private validateNumberRange(value: NumberRange, validation: Validation): ValidationResult {
-    if (!value.min || !value.max) {
-      return {
-        isValid: false,
-        errorMessage: 'Both minimum and maximum values are required'
-      };
-    }
-
-    if (value.min > value.max) {
-      return {
-        isValid: false,
-        errorMessage: 'Minimum value cannot be greater than maximum value'
-      };
-    }
-
-    if (validation.min !== undefined && (value.min < validation.min || value.max < validation.min)) {
-      return {
-        isValid: false,
-        errorMessage: validation.customMessage || `Values must be at least ${validation.min}`
-      };
-    }
-
-    if (validation.max !== undefined && (value.min > validation.max || value.max > validation.max)) {
-      return {
-        isValid: false,
-        errorMessage: validation.customMessage || `Values must be at most ${validation.max}`
-      };
-    }
-
-    return { isValid: true };
-  }
-
-  private validateDate(value: string, validation: Validation): ValidationResult {
-    const date = new Date(value);
-
-    if (isNaN(date.getTime())) {
-      return {
-        isValid: false,
-        errorMessage: 'Invalid date'
-      };
-    }
-
-    if (validation.minDate) {
-      const minDate = validation.minDate === 'today' ? new Date() : new Date(validation.minDate);
-      minDate.setHours(0, 0, 0, 0);
-      const checkDate = new Date(date);
-      checkDate.setHours(0, 0, 0, 0);
-
-      if (checkDate < minDate) {
-        return {
-          isValid: false,
-          errorMessage: validation.customMessage || `Date must be ${validation.minDate === 'today' ? 'today or later' : 'after ' + validation.minDate}`
-        };
-      }
-    }
-
-    if (validation.maxDate) {
-      const maxDate = validation.maxDate === 'today' ? new Date() : new Date(validation.maxDate);
-      maxDate.setHours(0, 0, 0, 0);
-      const checkDate = new Date(date);
-      checkDate.setHours(0, 0, 0, 0);
-
-      if (checkDate > maxDate) {
-        return {
-          isValid: false,
-          errorMessage: validation.customMessage || `Date must be ${validation.maxDate === 'today' ? 'today or earlier' : 'before ' + validation.maxDate}`
-        };
-      }
-    }
-
-    return { isValid: true };
-  }
-
-  private validateDateRange(value: DateRange, validation: Validation): ValidationResult {
-    if (!value.start || !value.end) {
-      return {
-        isValid: false,
-        errorMessage: 'Both start and end dates are required'
-      };
-    }
-
-    const startDate = new Date(value.start);
-    const endDate = new Date(value.end);
-
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      return {
-        isValid: false,
-        errorMessage: 'Invalid date format'
-      };
-    }
-
-    if (startDate > endDate) {
-      return {
-        isValid: false,
-        errorMessage: 'Start date cannot be after end date'
-      };
-    }
-
-    // Validate start date
-    const startValidation = this.validateDate(value.start, validation);
-    if (!startValidation.isValid) {
-      return {
-        isValid: false,
-        errorMessage: `Start date: ${startValidation.errorMessage}`
-      };
-    }
-
-    // Validate end date
-    const endValidation = this.validateDate(value.end, validation);
-    if (!endValidation.isValid) {
-      return {
-        isValid: false,
-        errorMessage: `End date: ${endValidation.errorMessage}`
-      };
-    }
-
-    return { isValid: true };
-  }
-
-  /**
-   * Answer the current question and move forward
-   * @deprecated Use answerCurrentQuestionTyped for type safety
-   */
-  answerCurrentQuestion(answer: any): ValidationResult {
-    const question = this.getCurrentQuestion();
-    if (!question) {
-      return {
-        isValid: false,
-        errorMessage: 'No current question'
-      };
-    }
-
     // Validate the answer
-    const validationResult = this.validateAnswer(question, answer);
+    const validationResult = validateAnswer(question, answer);
     if (!validationResult.isValid) {
       return validationResult;
     }
@@ -403,26 +157,6 @@ export class WizardEngine {
     this.rebuildQuestionsList();
 
     return { isValid: true };
-  }
-
-  /**
-   * Type-safe method to answer the current question.
-   * Validates and stores the answer with compile-time type checking.
-   *
-   * @example
-   * const question = engine.getCurrentQuestion();
-   * if (question && question.type === 'number') {
-   *   const result = engine.answerCurrentQuestionTyped(
-   *     question as Question<'number'>,
-   *     42
-   *   );
-   * }
-   */
-  answerCurrentQuestionTyped<T extends QuestionType>(
-    question: Question<T>,
-    answer: AnswerForQuestion<T>
-  ): ValidationResult {
-    return this.answerCurrentQuestion(answer);
   }
 
   /**
@@ -486,7 +220,8 @@ export class WizardEngine {
   }
 
   /**
-   * Get all answers
+   * Get all answers as an array of Answer objects.
+   * Each answer maintains its type-safe value.
    */
   getAnswers(): Answer[] {
     const answers: Answer[] = [];
@@ -497,24 +232,15 @@ export class WizardEngine {
   }
 
   /**
-   * Get answers as a plain object
-   * @deprecated Use getAnswersObjectTyped for better type information
+   * Get answers as a plain object mapping question IDs to their values.
+   * Values maintain their runtime types (string, number, NumberRange, etc.)
    */
-  getAnswersObject(): Record<string, any> {
-    const obj: Record<string, any> = {};
+  getAnswersObject(): Record<string, AnswerValue> {
+    const obj: Record<string, AnswerValue> = {};
     this.state.answers.forEach((value, questionId) => {
       obj[questionId] = value;
     });
     return obj;
-  }
-
-  /**
-   * Get answers as a plain object with type information preserved.
-   * Note: The return type is still Record<string, any> for flexibility,
-   * but individual answer values maintain their runtime types.
-   */
-  getAnswersObjectTyped(): Record<string, any> {
-    return this.getAnswersObject();
   }
 
   /**

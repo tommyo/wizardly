@@ -1,118 +1,126 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
 import { useWizard } from '../composables/useWizard';
-import type { WizardConfig, Answer } from '../types';
+import type { WizardConfig, Answer, AnswerValue, NumberRange } from '../types';
 
 // Props
-const props = defineProps<{
-  configUrl?: string;
-  config?: WizardConfig;
+const { config } = defineProps<{
+  // configUrl: string;
+  config: WizardConfig;
 }>();
 
 // Emits
 const emit = defineEmits<{
-  complete: [answers: Record<string, any>, answersList: Answer[]];
+  complete: [answers: Record<string, AnswerValue>, answersList: Answer[]];
   cancel: [];
 }>();
 
 // State
-const wizardConfig = ref<WizardConfig | null>(null);
-const isLoading = ref(true);
-const loadError = ref<string | null>(null);
+// const wizardConfig = ref<WizardConfig | null>(null);
+// const isLoading = ref(true);
+// const loadError = ref<string | null>(null);
 
 // Load wizard configuration
-const loadConfig = async () => {
-  try {
-    isLoading.value = true;
+// const loadConfig = async () => {
+//   try {
+//     isLoading.value = true;
 
-    if (props.config) {
-      wizardConfig.value = props.config;
-    } else if (props.configUrl) {
-      const response = await fetch(props.configUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to load wizard config: ${response.statusText}`);
-      }
-      wizardConfig.value = await response.json();
-    } else {
-      throw new Error('Either config or configUrl must be provided');
-    }
-  } catch (error) {
-    loadError.value = error instanceof Error ? error.message : 'Failed to load wizard configuration';
-  } finally {
-    isLoading.value = false;
-  }
-};
+//     if (props.config) {
+//       wizardConfig.value = props.config;
+//     } else if (props.configUrl) {
+//       const response = await fetch(props.configUrl);
+//       if (!response.ok) {
+//         throw new Error(`Failed to load wizard config: ${response.statusText}`);
+//       }
+//       wizardConfig.value = await response.json();
+//     } else {
+//       throw new Error('Either config or configUrl must be provided');
+//     }
+//   } catch (error) {
+//     loadError.value = error instanceof Error ? error.message : 'Failed to load wizard configuration';
+//   } finally {
+//     isLoading.value = false;
+//   }
+// };
 
-onMounted(loadConfig);
+// onMounted(loadConfig);
 
 // Initialize wizard when config is loaded
-const wizard = computed(() => {
-  if (!wizardConfig.value) return null;
-  return useWizard(wizardConfig.value);
-});
+const wizard = useWizard(config);
 
-// Handle next button click
-const handleNext = () => {
-  if (!wizard.value) return;
-  wizard.value.submitAnswer();
-};
+const {
+  currentQuestion,
+  currentAnswer,
+  progress,
+  isComplete,
+  canGoPrevious,
+  canGoNext,
+} = wizard;
 
-// Handle back button click
-const handleBack = () => {
-  if (!wizard.value) return;
-  wizard.value.goBack();
-};
+// const current
+
+// // Handle next button click
+// const handleNext = () => {
+//   wizard.submitAnswer();
+// };
+
+// // Handle back button click
+// const handleBack = () => {
+//   wizard.goBack();
+// };
 
 // Handle wizard completion
 const handleComplete = () => {
-  if (!wizard.value) return;
-  const result = wizard.value.complete();
+  const result = wizard.complete();
   // Emit both the object format and the array format for flexibility
   emit('complete', result.answersObject, result.answers);
 };
 
 // Handle cancel
-const handleCancel = () => {
-  emit('cancel');
-};
+// const handleCancel = () => {
+//   emit('cancel');
+// };
 </script>
 
 <template>
   <div class="wizard-container">
     <!-- Loading State -->
-    <div v-if="isLoading" class="wizard-loading">
-      <div class="spinner"></div>
-      <p>Loading wizard...</p>
-    </div>
+    <!--
+      <div v-if="wizard.isLoading" class="wizard-loading">
+        <div class="spinner"></div>
+        <p>Loading wizard...</p>
+      </div>
+    -->
 
     <!-- Error State -->
-    <div v-else-if="loadError" class="wizard-error">
-      <p class="error-message">{{ loadError }}</p>
-      <button @click="loadConfig" class="btn btn-primary">Retry</button>
-    </div>
+    <!--
+      <div v-else-if="loadError" class="wizard-error">
+        <p class="error-message">{{ loadError }}</p>
+        <button @click="loadConfig" class="btn btn-primary">Retry</button>
+      </div>
+    -->
 
     <!-- Wizard Content -->
-    <div v-else-if="wizard && wizardConfig" class="wizard-content">
+    <div class="wizard-content">
       <!-- Header -->
       <div class="wizard-header">
-        <h1 class="wizard-title">{{ wizardConfig.title }}</h1>
-        <p v-if="wizardConfig.description" class="wizard-description">
-          {{ wizardConfig.description }}
+        <h1 class="wizard-title">{{ config.title }}</h1>
+        <p v-if="config.description" class="wizard-description">
+          {{ config.description }}
         </p>
       </div>
 
       <!-- Progress Bar -->
       <div class="wizard-progress">
         <div class="progress-bar">
-          <div class="progress-fill" :style="{ width: `${wizard.progress.value.percentage}%` }"></div>
+          <div class="progress-fill" :style="{ width: `${progress.percentage}%` }"></div>
         </div>
         <p class="progress-text">
-          Question {{ wizard.progress.value.current }} of {{ wizard.progress.value.total }}
+          Question {{ progress.current }} of {{ progress.total }}
         </p>
       </div>
 
       <!-- Completion Screen -->
-      <div v-if="wizard.isComplete.value" class="wizard-complete">
+      <div v-if="isComplete" class="wizard-complete">
         <div class="complete-icon">✓</div>
         <h2>Complete!</h2>
         <p>Thank you for completing the wizard.</p>
@@ -127,138 +135,147 @@ const handleCancel = () => {
       </div>
 
       <!-- Question -->
-      <div v-else-if="wizard.currentQuestion.value" class="wizard-question">
+      <div v-else-if="currentQuestion" class="wizard-question">
         <div class="question-container">
           <h2 class="question-text">
-            {{ wizard.currentQuestion.value.question }}
-            <span v-if="wizard.currentQuestion.value.required" class="required-indicator">*</span>
+            {{ currentQuestion.question }}
+            <span v-if="currentQuestion.required" class="required-indicator">*</span>
           </h2>
 
-          <p v-if="wizard.currentQuestion.value.helpText" class="help-text">
-            {{ wizard.currentQuestion.value.helpText }}
+          <p v-if="currentQuestion.helpText" class="help-text">
+            {{ currentQuestion.helpText }}
           </p>
 
           <!-- Boolean (Toggle Switch) -->
-          <div v-if="wizard.currentQuestion.value.type === 'boolean'" class="input-boolean">
-            <label class="toggle-switch">
-              <input type="checkbox" :checked="wizard.currentAnswer.value"
-                @change="wizard.updateAnswer($event.target.checked)" />
-              <span class="toggle-slider"></span>
-              <span class="toggle-label">
-                {{ wizard.currentAnswer.value ? 'Yes' : 'No' }}
-              </span>
-            </label>
-          </div>
+          <template v-if="currentQuestion.type === 'boolean'">
+            <slot name="boolean" :question="currentQuestion" :answer="currentAnswer">
+              <div class="input-boolean">
+                <label class="toggle-switch">
+                  <input type="checkbox" v-model="currentAnswer" />
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-label">
+                    {{ currentAnswer ? 'Yes' : 'No' }}
+                  </span>
+                </label>
+              </div>
+            </slot>
+          </template>
 
           <!-- Multiple Choice -->
-          <div v-else-if="wizard.currentQuestion.value.type === 'multiple-choice'" class="input-multiple-choice">
-            <!-- Single Select -->
-            <div v-if="!wizard.currentQuestion.value.allowMultiple" class="radio-group">
-              <label v-for="option in wizard.currentQuestion.value.options" :key="option.value" class="radio-option">
-                <input type="radio" :value="option.value" :checked="wizard.currentAnswer.value === option.value"
-                  @change="wizard.updateAnswer(option.value)" />
-                <span>{{ option.label }}</span>
-              </label>
-            </div>
+          <template v-else-if="currentQuestion.type === 'multiple-choice'">
+            <slot name="multiple-choice" :question="currentQuestion" :answer="currentAnswer">
+              <div class="input-multiple-choice">
+                <!-- Single Select -->
+                <div v-if="!currentQuestion.allowMultiple" class="radio-group">
+                  <label v-for="option in currentQuestion.options" :key="option.value" class="radio-option">
+                    <input type="radio" v-model="currentAnswer" />
+                    <span>{{ option.label }}</span>
+                  </label>
+                </div>
 
-            <!-- Multiple Select -->
-            <div v-else class="checkbox-group">
-              <label v-for="option in wizard.currentQuestion.value.options" :key="option.value" class="checkbox-option">
-                <input type="checkbox" :value="option.value"
-                  :checked="(wizard.currentAnswer.value || []).includes(option.value)" @change="(e) => {
-                    const current = wizard.currentAnswer.value || [];
-                    const newValue = e.target.checked
-                      ? [...current, option.value]
-                      : current.filter(v => v !== option.value);
-                    wizard.updateAnswer(newValue);
-                  }" />
-                <span>{{ option.label }}</span>
-              </label>
-            </div>
-          </div>
+                <!-- Multiple Select -->
+                <div v-else class="checkbox-group">
+                  <label v-for="option in currentQuestion.options" :key="option.value" class="checkbox-option">
+                    <input type="checkbox" v-model="currentAnswer" />
+                    <span>{{ option.label }}</span>
+                  </label>
+                </div>
+              </div>
+            </slot>
+          </template>
 
           <!-- Text Input -->
-          <div v-else-if="wizard.currentQuestion.value.type === 'text'" class="input-text">
-            <textarea :value="wizard.currentAnswer.value || ''" @input="wizard.updateAnswer($event.target.value)"
-              :placeholder="wizard.currentQuestion.value.helpText" rows="4" class="text-input"></textarea>
-          </div>
+          <template v-else-if="currentQuestion.type === 'text'">
+            <slot name="text" :question="currentQuestion" :answer="currentAnswer">
+              <div class="input-text">
+                <textarea v-model="currentAnswer as string" :placeholder="currentQuestion.helpText" rows="4"
+                  class="text-input"></textarea>
+              </div>
+            </slot>
+          </template>
 
           <!-- Number Input -->
-          <div v-else-if="wizard.currentQuestion.value.type === 'number'" class="input-number">
-            <input type="number" :value="wizard.currentAnswer.value || ''"
-              @input="wizard.updateAnswer(Number($event.target.value))"
-              :min="wizard.currentQuestion.value.validation?.min" :max="wizard.currentQuestion.value.validation?.max"
-              class="number-input" />
-          </div>
+          <template v-else-if="currentQuestion.type === 'number'">
+            <slot name="number" :question="currentQuestion" :answer="currentAnswer">
+              <div class="input-number">
+                <input type="number" v-model="currentAnswer" :min="currentQuestion.validation?.min"
+                  :max="currentQuestion.validation?.max" class="number-input" />
+              </div>
+            </slot>
+          </template>
 
           <!-- Number Range -->
-          <div v-else-if="wizard.currentQuestion.value.type === 'number-range'" class="input-number-range">
-            <div class="range-inputs">
-              <div class="range-input-group">
-                <label>Minimum</label>
-                <input type="number" :value="wizard.currentAnswer.value?.min || ''" @input="wizard.updateAnswer({
-                  ...wizard.currentAnswer.value,
-                  min: Number($event.target.value)
-                })" :min="wizard.currentQuestion.value.validation?.min"
-                  :max="wizard.currentQuestion.value.validation?.max" class="number-input" />
+          <template v-else-if="currentQuestion.type === 'number-range'">
+            <slot name="number-range" :question="currentQuestion" :answer="currentAnswer">
+              <div class="input-number-range">
+                <div class="range-inputs">
+                  <div class="range-input-group">
+                    <label>Minimum</label>
+                    <input type="number" v-model="(currentAnswer as Partial<NumberRange>).min"
+                      :min="currentQuestion.validation?.min" :max="currentQuestion.validation?.max"
+                      class="number-input" />
+                  </div>
+                  <div class="range-separator">-</div>
+                  <div class="range-input-group">
+                    <label>Maximum</label>
+                    <input type="number" v-model="(currentAnswer as Partial<NumberRange>).min"
+                      :min="currentQuestion.validation?.min" :max="currentQuestion.validation?.max"
+                      class="number-input" />
+                  </div>
+                </div>
               </div>
-              <div class="range-separator">-</div>
-              <div class="range-input-group">
-                <label>Maximum</label>
-                <input type="number" :value="wizard.currentAnswer.value?.max || ''" @input="wizard.updateAnswer({
-                  ...wizard.currentAnswer.value,
-                  max: Number($event.target.value)
-                })" :min="wizard.currentQuestion.value.validation?.min"
-                  :max="wizard.currentQuestion.value.validation?.max" class="number-input" />
-              </div>
-            </div>
-          </div>
+            </slot>
+          </template>
 
           <!-- Date Input -->
-          <div v-else-if="wizard.currentQuestion.value.type === 'date'" class="input-date">
-            <input type="date" :value="wizard.currentAnswer.value || ''"
-              @input="wizard.updateAnswer($event.target.value)" class="date-input" />
-          </div>
+          <template v-else-if="currentQuestion.type === 'date'">
+            <slot name="date" :question="currentQuestion" :answer="currentAnswer">
+              <div class="input-date">
+                <input type="date" v-model="currentAnswer" class="date-input" />
+              </div>
+            </slot>
+          </template>
 
           <!-- Date Range -->
-          <div v-else-if="wizard.currentQuestion.value.type === 'date-range'" class="input-date-range">
-            <div class="range-inputs">
-              <div class="range-input-group">
-                <label>Start Date</label>
-                <input type="date" :value="wizard.currentAnswer.value?.start || ''" @input="wizard.updateAnswer({
-                  ...wizard.currentAnswer.value,
-                  start: $event.target.value
-                })" class="date-input" />
+          <template v-else-if="currentQuestion.type === 'date-range'">
+            <slot name="date-range" :question="currentQuestion" :answer="currentAnswer">
+              <div class="input-date-range">
+                <div class="range-inputs">
+                  <div class="range-input-group">
+                    <label>Start Date</label>
+                    <input type="date" v-model="currentAnswer" class="date-input" />
+                  </div>
+                  <div class="range-separator">to</div>
+                  <div class="range-input-group">
+                    <label>End Date</label>
+                    <input type="date" v-model="currentAnswer" class="date-input" />
+                  </div>
+                </div>
               </div>
-              <div class="range-separator">to</div>
-              <div class="range-input-group">
-                <label>End Date</label>
-                <input type="date" :value="wizard.currentAnswer.value?.end || ''" @input="wizard.updateAnswer({
-                  ...wizard.currentAnswer.value,
-                  end: $event.target.value
-                })" class="date-input" />
-              </div>
-            </div>
-          </div>
+            </slot>
+          </template>
 
           <!-- Validation Error -->
-          <p v-if="wizard.validationError.value" class="validation-error">
-            {{ wizard.validationError.value }}
-          </p>
+          <!--
+      <p v-if="wizard.validationError.value" class="validation-error">
+        {{ wizard.validationError.value }}
+      </p>
+    -->
         </div>
+
 
         <!-- Navigation Buttons -->
         <div class="wizard-navigation">
-          <button @click="handleBack" :disabled="!wizard.canGoPrevious.value" class="btn btn-secondary">
+          <button @click="wizard.goBack()" :disabled="!canGoPrevious" class="btn btn-secondary">
             Back
           </button>
 
-          <button v-if="!wizard.currentQuestion.value.required" @click="wizard.skipQuestion()" class="btn btn-text">
+          <button v-if="!currentQuestion.required" @click="wizard.skipQuestion()" class="btn btn-text">
             Skip
           </button>
 
-          <button @click="handleNext" class="btn btn-primary">
-            {{ wizard.canGoNext.value ? 'Next' : 'Finish' }}
+          <button @click="wizard.submitAnswer()" class="btn btn-primary">
+            {{ canGoNext ? 'Next' : 'Finish' }}
           </button>
         </div>
       </div>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import WizardComponent from './WizardComponent.vue';
-import type { WizardConfig } from './types';
+import WizardComponent from '../../components/WizardComponent.vue';
+import type { WizardConfig } from '../../types';
 
 // Example 1: Load from URL
 const showWizard1 = ref(true);
@@ -45,16 +45,17 @@ const inlineConfig: WizardConfig = {
 };
 
 // Handle wizard completion
-const handleWizardComplete = (answers: Record<string, any>) => {
+// FIXME make more type aware
+const handleWizardComplete = (answers: Record<string, unknown>) => {
   console.log('Wizard completed with answers:', answers);
-  
+
   // Send to API
   // await fetch('/api/submit-wizard', {
   //   method: 'POST',
   //   headers: { 'Content-Type': 'application/json' },
   //   body: JSON.stringify(answers)
   // });
-  
+
   alert('Wizard completed! Check console for answers.');
 };
 
@@ -68,12 +69,12 @@ const handleWizardCancel = () => {
 <template>
   <div class="app">
     <h1>Wizard Component Examples</h1>
-    
+
     <div class="examples">
       <button @click="showWizard1 = true" class="example-btn">
         Example 1: Load from JSON URL
       </button>
-      
+
       <button @click="showWizard2 = true" class="example-btn">
         Example 2: Inline Configuration
       </button>
@@ -83,11 +84,8 @@ const handleWizardCancel = () => {
     <div v-if="showWizard1" class="modal">
       <div class="modal-content">
         <button @click="showWizard1 = false" class="close-btn">×</button>
-        <WizardComponent
-          config-url="/example-wizard.json"
-          @complete="handleWizardComplete"
-          @cancel="() => { showWizard1 = false; handleWizardCancel(); }"
-        />
+        <WizardComponent config-url="/example-wizard.json" @complete="handleWizardComplete"
+          @cancel="() => { showWizard1 = false; handleWizardCancel(); }" />
       </div>
     </div>
 
@@ -95,11 +93,8 @@ const handleWizardCancel = () => {
     <div v-if="showWizard2" class="modal">
       <div class="modal-content">
         <button @click="showWizard2 = false" class="close-btn">×</button>
-        <WizardComponent
-          :config="inlineConfig"
-          @complete="handleWizardComplete"
-          @cancel="() => { showWizard2 = false; handleWizardCancel(); }"
-        />
+        <WizardComponent :config="inlineConfig" @complete="handleWizardComplete"
+          @cancel="() => { showWizard2 = false; handleWizardCancel(); }" />
       </div>
     </div>
   </div>

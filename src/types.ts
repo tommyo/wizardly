@@ -19,6 +19,7 @@ export type ConditionOperator =
 export interface Option {
   value: string;
   label: string;
+  image?: string;
 }
 
 export interface Validation {
@@ -66,6 +67,11 @@ export type AnswerValueMap = {
  */
 export type AnswerForQuestion<T extends QuestionType> = AnswerValueMap[T];
 
+/**
+ * Union type of all possible answer values
+ */
+export type AnswerValue = AnswerValueMap[QuestionType];
+
 // ============================================================================
 // Type-Safe Condition System
 // ============================================================================
@@ -96,20 +102,11 @@ export type BetweenCondition = {
 /**
  * Union of all condition types - provides type safety for condition values
  */
-export type TypedCondition =
+export type Condition =
   | EqualsCondition
   | ContainsCondition
   | ComparisonCondition
   | BetweenCondition;
-
-/**
- * Legacy condition interface - kept for backward compatibility
- * @deprecated Use TypedCondition for type safety
- */
-export interface Condition {
-  operator: ConditionOperator;
-  value: any;
-}
 
 // ============================================================================
 // Core Interfaces with Generic Support
@@ -117,7 +114,7 @@ export interface Condition {
 
 /**
  * Generic Question interface with type parameter for type-safe operations.
- * The generic parameter defaults to QuestionType for backward compatibility.
+ * The generic parameter defaults to QuestionType for flexibility.
  */
 export interface Question<T extends QuestionType = QuestionType> {
   id: string;
@@ -135,17 +132,17 @@ export interface Question<T extends QuestionType = QuestionType> {
  * Generic ConditionalQuestion interface
  */
 export interface ConditionalQuestion<T extends QuestionType = QuestionType> {
-  condition: Condition | TypedCondition;
+  condition: Condition;
   question: Question<T>;
 }
 
 /**
  * Generic Answer interface with type parameter.
- * When T is specified, value is type-safe. Otherwise, falls back to any for compatibility.
+ * Provides compile-time type safety for answer values.
  */
 export interface Answer<T extends QuestionType = QuestionType> {
   questionId: string;
-  value: T extends QuestionType ? AnswerForQuestion<T> : any;
+  value: AnswerForQuestion<T>;
 }
 
 export interface WizardConfig {
@@ -155,9 +152,12 @@ export interface WizardConfig {
   questions: Question[];
 }
 
+/**
+ * Internal wizard state with type-safe answer storage
+ */
 export interface WizardState {
   currentQuestionIndex: number;
-  answers: Map<string, any>;
+  answers: Map<string, AnswerValue>;
   flattenedQuestions: Question[];
   visitedQuestions: string[];
   isComplete: boolean;

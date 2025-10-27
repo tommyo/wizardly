@@ -21,7 +21,11 @@
       }
     }
   },
-  "required": ["wizardId", "title", "questions"],
+  "required": [
+    "wizardId",
+    "title",
+    "questions"
+  ],
   "definitions": {
     "Question": {
       "type": "object",
@@ -61,6 +65,11 @@
             "$ref": "#/definitions/Option"
           }
         },
+        "autoNext": {
+          "type": "boolean",
+          "description": "Whether or not it should auto-advance once answered",
+          "default": false
+        },
         "allowMultiple": {
           "type": "boolean",
           "description": "For multiple-choice: allow selecting multiple options",
@@ -77,7 +86,11 @@
           }
         }
       },
-      "required": ["id", "type", "question"]
+      "required": [
+        "id",
+        "type",
+        "question"
+      ]
     },
     "Option": {
       "type": "object",
@@ -89,9 +102,16 @@
         "label": {
           "type": "string",
           "description": "The display text for this option"
+        },
+        "image": {
+          "type": "string",
+          "description": "An optional image to display"
         }
       },
-      "required": ["value", "label"]
+      "required": [
+        "value",
+        "label"
+      ]
     },
     "Validation": {
       "type": "object",
@@ -140,21 +160,33 @@
           "$ref": "#/definitions/Question"
         }
       },
-      "required": ["condition", "question"]
+      "required": [
+        "condition",
+        "question"
+      ]
     },
     "Condition": {
       "type": "object",
       "properties": {
         "operator": {
           "type": "string",
-          "enum": ["equals", "contains", "greaterThan", "lessThan", "between"],
+          "enum": [
+            "equals",
+            "contains",
+            "greaterThan",
+            "lessThan",
+            "between"
+          ],
           "description": "How to evaluate the condition"
         },
         "value": {
           "description": "The value(s) to compare against"
         }
       },
-      "required": ["operator", "value"]
+      "required": [
+        "operator",
+        "value"
+      ]
     }
   }
 }
