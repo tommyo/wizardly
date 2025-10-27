@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useWizard } from '../composables/useWizard';
-import type { WizardConfig } from '../types';
+import type { WizardConfig, Answer } from '../types';
 
 // Props
 const props = defineProps<{
@@ -11,7 +11,7 @@ const props = defineProps<{
 
 // Emits
 const emit = defineEmits<{
-  complete: [answers: Record<string, any>];
+  complete: [answers: Record<string, any>, answersList: Answer[]];
   cancel: [];
 }>();
 
@@ -67,7 +67,8 @@ const handleBack = () => {
 const handleComplete = () => {
   if (!wizard.value) return;
   const result = wizard.value.complete();
-  emit('complete', result.answersObject);
+  // Emit both the object format and the array format for flexibility
+  emit('complete', result.answersObject, result.answers);
 };
 
 // Handle cancel
