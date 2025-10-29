@@ -3,10 +3,10 @@
 import { computed, reactive } from 'vue';
 import { WizardEngine } from '../wizard-engine';
 import * as wizard from '../wizard-state';
-import type { QuestionType, WizardConfig, Answer } from '../types';
-export function useWizard(config: WizardConfig) {
+import type { Question, Answer } from '../types';
+export function useWizard(questions: Question[]) {
 
-  const engine = new WizardEngine(config);
+  const engine = new WizardEngine(questions);
 
   // Create the wizard state
   const state = reactive(engine.initState());
@@ -33,11 +33,11 @@ export function useWizard(config: WizardConfig) {
   });
 
   /**
-   * Submit the current answer and move to next question.
+   * Submit the current answers and move on.
    */
-  const answerQuestions = (answer: Answer<QuestionType>[]): void => {
-    // Type assertion is safe here because currentAnswer is set based on question type
-    engine.answerQuestions(state, answer);
+  const answerQuestions = (answers: Answer[]): void => {
+    engine.answerQuestions(state, answers);
+    wizard.next(state);
   };
 
   /**
@@ -68,7 +68,7 @@ export function useWizard(config: WizardConfig) {
    * Reset the wizard
    */
   const reset = () => {
-    engine.reset(config, state);
+    engine.reset(state);
   };
 
   /**

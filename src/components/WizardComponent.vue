@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useWizard } from '../composables/useWizard';
-import type { Answer, AnswerValue, NumberRange, WizardConfig } from '../types';
+import type { Question, Answer, AnswerValue, NumberRange } from '../types';
 
 // Props
-const { config } = defineProps<{
+const { questions } = defineProps<{
   // configUrl: string;
-  config: WizardConfig;
+  questions: Question[];
 }>();
 
 // Emits
@@ -46,7 +46,7 @@ const emit = defineEmits<{
 // onMounted(loadConfig);
 
 // Initialize wizard when config is loaded
-const wizard = useWizard(config);
+const wizard = useWizard(questions);
 
 const {
   currentQuestions,
@@ -58,18 +58,30 @@ const {
 } = wizard;
 
 const i = ref(0);
+const firstQuestion = computed(() => currentQuestions.value[0]!);
+const firstAnswer = computed(() => currentAnswers.value[0]);
 const currentQuestion = computed(() => currentQuestions.value[i.value]);
 const currentAnswer = computed(() => currentAnswers.value[i.value]);
 
-const next = () => {
-  if (currentQuestions.value.length > i.value + 1) {
-    // if (currentQuestions.value[0]?.type === 'boolean'
-    //   && currentAnswers.value[0].
-    // ) {
+const answers = ref<AnswerValue[]>([]);
+const saveAnswers = () => {
+  const all = currentQuestions.value
+    .map((q, i) => ({ questionId: q.id, value: answers.value[i] } as Answer))
+    .filter((a) => a.value !== undefined && a.value !== null);
+  wizard.answerQuestions(all);
+};
 
-    // }
+const next = () => {
+  if (i.value < currentQuestions.value.length - 1) {
+    // we actually only want to show more if we answered the parent question positively
+    if (firstQuestion.value.type === 'boolean' && firstAnswer.value === true) {
+      i.value++;
+      return;
+    }
   }
-  // wizard.
+  i.value = 0;
+  saveAnswers();
+  answers.value = [];
 };
 
 // const boolPersist = ref<Question[]>([]);
@@ -117,14 +129,6 @@ const handleComplete = () => {
 
     <!-- Wizard Content -->
     <div class="wizard-content">
-      <!-- Header -->
-      <div class="wizard-header">
-        <h1 class="wizard-title">{{ config.title }}</h1>
-        <p v-if="config.description" class="wizard-description">
-          {{ config.description }}
-        </p>
-      </div>
-
       <!-- Progress Bar -->
       <div class="wizard-progress">
         <div class="progress-bar">
@@ -153,6 +157,7 @@ const handleComplete = () => {
       <!-- Question -->
       <div v-else-if="currentQuestion" class="wizard-question">
         <div class="question-container">
+
           <h2 class="question-text">
             {{ currentQuestion.question }}
             <span v-if="currentQuestion.required" class="required-indicator">*</span>

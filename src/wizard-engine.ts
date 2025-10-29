@@ -1,42 +1,35 @@
 // wizard-engine.ts - Core logic for managing the wizard
 
 import type {
-  WizardConfig,
   Question,
   WizardState,
-  QuestionType,
-  AnswerForQuestion,
   AnswerValue,
   Condition,
   Answer,
 } from './types';
 
-// export interface WizardConfig {
-//   wizardId: string;
-//   title: string;
-//   description?: string;
-//   questions: Question[];
-// }
-
 export class WizardEngine {
-  config: WizardConfig;
+  private questions: Question[];
 
-  constructor(config: WizardConfig) {
-    this.config = config;
+  constructor(questions: Question[]) {
+    this.questions = questions;
   }
 
   initState(): WizardState {
-    const state: WizardState = {
-      currentQuestionIndex: 0,
-      answers: new Map(),
-      flattenedQuestions: [],
-      // these two aren't affected by the engine, but they should be?
-      visitedQuestions: [],
-      isComplete: false,
-    };
+    return this.reset({});
+  }
 
-    this.rebuildQuestionsList(state);
-    return state;
+  /**
+ * Reset the wizard state
+ */
+  reset(state: Partial<WizardState>): WizardState {
+    state.currentQuestionIndex = 0;
+    state.answers = new Map();
+    state.flattenedQuestions = [];
+    state.visitedQuestions = [];
+    state.isComplete = false;
+    this.rebuildQuestionsList(state as WizardState);
+    return state as WizardState;
   }
 
   /**
@@ -68,7 +61,7 @@ export class WizardEngine {
       }
     };
 
-    for (const question of this.config.questions) {
+    for (const question of this.questions) {
       processQuestion(question);
     }
 
@@ -76,7 +69,7 @@ export class WizardEngine {
   }
 
   addQuestions(state: WizardState, questions: Question[]) {
-    this.config.questions = [...this.config.questions, ...questions];
+    this.questions = [...this.questions, ...questions];
     this.rebuildQuestionsList(state);
   }
 
@@ -95,36 +88,19 @@ export class WizardEngine {
  */
   answerQuestions(
     state: WizardState,
-    answers: Answer<QuestionType>[],
+    answers: Answer[],
   ): void {
-    const added: [string, AnswerForQuestion<QuestionType>][] = [];
+    const added: [string, AnswerValue][] = [];
 
-    answers.forEach((v: Answer<QuestionType>) => {
-      added.push([v.questionId, v.value]);
+    answers.forEach((answer) => {
+      added.push([answer.questionId, answer.value]);
     });
-    // // Track visited questions
-    // if (!state.visitedQuestions.includes(question.id)) {
-    //   state.visitedQuestions.push(question.id);
-    // }
-    // Store the answer
-    state.answers = new Map([
-      ...state.answers,
-      ...added,
-    ]);
+
+    // Store the answers - create new Map from existing entries plus new ones
+    const existingEntries = Array.from(state.answers.entries());
+    state.answers = new Map([...existingEntries, ...added]);
 
     // Rebuild questions list (handles conditional logic)
-    this.rebuildQuestionsList(state);
-  }
-
-  /**
- * Reset the wizard
- */
-  reset(config: WizardConfig, state: WizardState): void {
-    state.currentQuestionIndex = 0;
-    state.answers = new Map();
-    state.flattenedQuestions = [];
-    state.visitedQuestions = [];
-    state.isComplete = false;
     this.rebuildQuestionsList(state);
   }
 }

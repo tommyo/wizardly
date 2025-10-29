@@ -1,4 +1,4 @@
-import type { AnswerForQuestion, DateRange, NumberRange, Question, QuestionType, Validation, ValidationResult } from "./types";
+import type { AnswerValueMap, DateRange, NumberRange, Question, QuestionType, Validation, ValidationResult } from "./types";
 
 /**
  * Validate an answer for a given question with type safety.
@@ -7,11 +7,11 @@ import type { AnswerForQuestion, DateRange, NumberRange, Question, QuestionType,
  * @example
  * const question: Question<'number-range'> = { ... };
  * const answer: NumberRange = { min: 10, max: 20 };
- * const result = engine.validateAnswer(question, answer);
+ * const result = validateAnswer(question, answer);
  */
 export function validateAnswer<T extends QuestionType>(
   question: Question<T>,
-  answer: AnswerForQuestion<T>
+  answer: AnswerValueMap[T]
 ): ValidationResult {
   // Check if required
   if (question.required && (answer === null || answer === undefined || answer === '')) {

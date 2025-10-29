@@ -62,13 +62,8 @@ export type AnswerValueMap = {
 };
 
 /**
- * Extract the correct answer type for a given question type.
- * This is the core type that enables type-safe operations.
- */
-export type AnswerForQuestion<T extends QuestionType> = AnswerValueMap[T];
-
-/**
- * Union type of all possible answer values
+ * Union type of all possible answer values.
+ * This represents any valid answer value across all question types.
  */
 export type AnswerValue = AnswerValueMap[QuestionType];
 
@@ -137,12 +132,20 @@ export interface ConditionalQuestion<T extends QuestionType = QuestionType> {
 }
 
 /**
- * Generic Answer interface with type parameter.
- * Provides compile-time type safety for answer values.
+ * Answer interface representing a question's answer.
+ * When used with a specific question type T, provides compile-time type safety.
+ * When used without a type parameter (default), value is the union of all possible answer types.
+ *
+ * @example
+ * // Type-safe usage with specific question type
+ * const numberAnswer: Answer<'number'> = { questionId: 'q1', value: 42 };
+ *
+ * // Generic usage (value can be any AnswerValue)
+ * const genericAnswer: Answer = { questionId: 'q2', value: 'text' };
  */
 export interface Answer<T extends QuestionType = QuestionType> {
   questionId: string;
-  value: AnswerForQuestion<T>;
+  value: T extends QuestionType ? AnswerValueMap[T] : never;
 }
 
 export interface WizardConfig {

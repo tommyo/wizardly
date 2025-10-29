@@ -1,31 +1,36 @@
 import type {
   Answer,
-  AnswerForQuestion,
   AnswerValue,
   ProgressReport,
   Question,
-  QuestionType,
   WizardState,
 } from "./types";
 
 /**
  * Get the current question
  */
-export function getQuestionSet(state: WizardState, i = -1): Question[] {
-  if (i === -1) {
-    i = state.currentQuestionIndex;
-  }
+export function getQuestionSet(state: WizardState, startIndex = -1): Question[] {
+  let i = startIndex === -1 ? state.currentQuestionIndex : startIndex;
+
   if (i >= state.flattenedQuestions.length) {
     return [];
   }
-  const out = [state.flattenedQuestions[i]!];
 
-  while (true) {
+  const firstQuestion = state.flattenedQuestions[i];
+  if (!firstQuestion) {
+    return [];
+  }
+
+  const out: Question[] = [firstQuestion];
+  i++; // Move to next question
+
+  while (i < state.flattenedQuestions.length) {
     const next = state.flattenedQuestions[i];
-    if (!next || next.conditionalParent !== out[0]!.id) {
+    if (!next || next.conditionalParent !== firstQuestion.id) {
       break;
     }
     out.push(next);
+    i++;
   }
   return out;
 }
@@ -46,8 +51,8 @@ export function getQuestionSet(state: WizardState, i = -1): Question[] {
 export function getCurrentAnswers(
   state: WizardState,
   questions: Question[],
-): (AnswerForQuestion<QuestionType> | undefined)[] {
-  return questions.map((q) => state.answers.get(q.id) as AnswerForQuestion<QuestionType> | undefined);
+): (AnswerValue | undefined)[] {
+  return questions.map((q) => state.answers.get(q.id));
 }
 
 /**
