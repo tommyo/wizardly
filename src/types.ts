@@ -158,12 +158,18 @@ export interface WizardConfig {
 export interface WizardState {
   currentQuestionIndex: number;
   answers: Map<string, AnswerValue>;
-  flattenedQuestions: Question[];
+  flattenedQuestions: (Question & { conditionalParent?: string })[];
   visitedQuestions: string[];
   isComplete: boolean;
 }
 
 export interface ValidationResult {
   isValid: boolean;
-  errorMessage?: string;
+  error?: Error;
+}
+
+export interface ProgressReport {
+  current: number,
+  total: number,
+  percentage: number,
 }

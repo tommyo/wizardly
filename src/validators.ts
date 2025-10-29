@@ -17,7 +17,7 @@ export function validateAnswer<T extends QuestionType>(
   if (question.required && (answer === null || answer === undefined || answer === '')) {
     return {
       isValid: false,
-      errorMessage: 'This question is required'
+      error: new Error('This question is required'),
     };
   }
 
@@ -57,14 +57,14 @@ function validateText(value: string, validation: Validation): ValidationResult {
   if (validation.minLength && value.length < validation.minLength) {
     return {
       isValid: false,
-      errorMessage: validation.customMessage || `Minimum length is ${validation.minLength} characters`
+      error: new Error(validation.customMessage || `Minimum length is ${validation.minLength} characters`),
     };
   }
 
   if (validation.maxLength && value.length > validation.maxLength) {
     return {
       isValid: false,
-      errorMessage: validation.customMessage || `Maximum length is ${validation.maxLength} characters`
+      error: new Error(validation.customMessage || `Maximum length is ${validation.maxLength} characters`),
     };
   }
 
@@ -73,7 +73,7 @@ function validateText(value: string, validation: Validation): ValidationResult {
     if (!regex.test(value)) {
       return {
         isValid: false,
-        errorMessage: validation.customMessage || 'Invalid format'
+        error: new Error(validation.customMessage || 'Invalid format'),
       };
     }
   }
@@ -85,14 +85,14 @@ function validateNumber(value: number, validation: Validation): ValidationResult
   if (validation.min !== undefined && value < validation.min) {
     return {
       isValid: false,
-      errorMessage: validation.customMessage || `Minimum value is ${validation.min}`
+      error: new Error(validation.customMessage || `Minimum value is ${validation.min}`),
     };
   }
 
   if (validation.max !== undefined && value > validation.max) {
     return {
       isValid: false,
-      errorMessage: validation.customMessage || `Maximum value is ${validation.max}`
+      error: new Error(validation.customMessage || `Maximum value is ${validation.max}`),
     };
   }
 
@@ -103,28 +103,28 @@ function validateNumberRange(value: NumberRange, validation: Validation): Valida
   if (!value.min || !value.max) {
     return {
       isValid: false,
-      errorMessage: 'Both minimum and maximum values are required'
+      error: new Error('Both minimum and maximum values are required'),
     };
   }
 
   if (value.min > value.max) {
     return {
       isValid: false,
-      errorMessage: 'Minimum value cannot be greater than maximum value'
+      error: new Error('Minimum value cannot be greater than maximum value'),
     };
   }
 
   if (validation.min !== undefined && (value.min < validation.min || value.max < validation.min)) {
     return {
       isValid: false,
-      errorMessage: validation.customMessage || `Values must be at least ${validation.min}`
+      error: new Error(validation.customMessage || `Values must be at least ${validation.min}`),
     };
   }
 
   if (validation.max !== undefined && (value.min > validation.max || value.max > validation.max)) {
     return {
       isValid: false,
-      errorMessage: validation.customMessage || `Values must be at most ${validation.max}`
+      error: new Error(validation.customMessage || `Values must be at most ${validation.max}`),
     };
   }
 
@@ -137,7 +137,7 @@ function validateDate(value: string, validation: Validation): ValidationResult {
   if (isNaN(date.getTime())) {
     return {
       isValid: false,
-      errorMessage: 'Invalid date'
+      error: new Error('Invalid date'),
     };
   }
 
@@ -150,7 +150,7 @@ function validateDate(value: string, validation: Validation): ValidationResult {
     if (checkDate < minDate) {
       return {
         isValid: false,
-        errorMessage: validation.customMessage || `Date must be ${validation.minDate === 'today' ? 'today or later' : 'after ' + validation.minDate}`
+        error: new Error(validation.customMessage || `Date must be ${validation.minDate === 'today' ? 'today or later' : 'after ' + validation.minDate}`),
       };
     }
   }
@@ -164,7 +164,7 @@ function validateDate(value: string, validation: Validation): ValidationResult {
     if (checkDate > maxDate) {
       return {
         isValid: false,
-        errorMessage: validation.customMessage || `Date must be ${validation.maxDate === 'today' ? 'today or earlier' : 'before ' + validation.maxDate}`
+        error: new Error(validation.customMessage || `Date must be ${validation.maxDate === 'today' ? 'today or earlier' : 'before ' + validation.maxDate}`),
       };
     }
   }
@@ -176,7 +176,7 @@ function validateDateRange(value: DateRange, validation: Validation): Validation
   if (!value.start || !value.end) {
     return {
       isValid: false,
-      errorMessage: 'Both start and end dates are required'
+      error: new Error('Both start and end dates are required'),
     };
   }
 
@@ -186,14 +186,14 @@ function validateDateRange(value: DateRange, validation: Validation): Validation
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
     return {
       isValid: false,
-      errorMessage: 'Invalid date format'
+      error: new Error('Invalid date format'),
     };
   }
 
   if (startDate > endDate) {
     return {
       isValid: false,
-      errorMessage: 'Start date cannot be after end date'
+      error: new Error('Start date cannot be after end date'),
     };
   }
 
@@ -202,7 +202,7 @@ function validateDateRange(value: DateRange, validation: Validation): Validation
   if (!startValidation.isValid) {
     return {
       isValid: false,
-      errorMessage: `Start date: ${startValidation.errorMessage}`
+      error: new Error(`Start date: ${startValidation.error}`),
     };
   }
 
@@ -211,7 +211,7 @@ function validateDateRange(value: DateRange, validation: Validation): Validation
   if (!endValidation.isValid) {
     return {
       isValid: false,
-      errorMessage: `End date: ${endValidation.errorMessage}`
+      error: new Error(`End date: ${endValidation.error}`),
     };
   }
 

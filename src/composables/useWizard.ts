@@ -1,147 +1,74 @@
 // useWizard.ts - Vue 3 Composable for wizard management
 
-import { ref, computed } from 'vue';
+import { computed, reactive } from 'vue';
 import { WizardEngine } from '../wizard-engine';
-import type { WizardConfig, Question, QuestionType, AnswerForQuestion, AnswerValue } from '../types';
-import { validateAnswer } from '@/validators';
-
+import * as wizard from '../wizard-state';
+import type { QuestionType, WizardConfig, Answer } from '../types';
 export function useWizard(config: WizardConfig) {
-  // Create the wizard engine
+
   const engine = new WizardEngine(config);
 
-  // Reactive state
-  const currentQuestion = ref<Question | null>(null);
-  const currentAnswer = ref<AnswerValue | undefined>();
-  const validationError = ref<string | null>(null);
-  const isComplete = ref(false);
+  // Create the wizard state
+  const state = reactive(engine.initState());
 
-  // Computed properties
-  /**
-   * Update the current question and answer from the engine
-   */
-  const updateCurrentState = () => {
-    currentQuestion.value = engine.getCurrentQuestion();
-    currentAnswer.value = currentQuestion.value
-      ? engine.getCurrentAnswer(currentQuestion.value)
-      : undefined;
-    validationError.value = null;
-    isComplete.value = engine.isComplete();
-  };
-  updateCurrentState();
+  const currentQuestions = computed(() => wizard.getQuestionSet(state));
+
+  const currentAnswers = computed(() => {
+    if (currentQuestions.value) {
+      return wizard.getCurrentAnswers(state, currentQuestions.value);
+    }
+    return [];
+  });
+
+  const isComplete = computed(() => state.isComplete);
 
   const progress = computed(() => {
-    const _ = currentQuestion.value;
-    return engine.getProgress();
+    return wizard.getProgress(state);
   });
   const canGoNext = computed(() => {
-    const _ = currentQuestion.value;
-    return engine.canGoNext();
+    return wizard.canGoNext(state);
   });
   const canGoPrevious = computed(() => {
-    const _ = currentQuestion.value;
-    return engine.canGoPrevious();
+    return wizard.canGoPrevious(state);
   });
-
-  /**
-   * Update the current answer value.
-   * Clears validation errors when the user starts typing/changing.
-   *
-   * @example
-   * const question = currentQuestion.value;
-   * if (question && question.type === 'number-range') {
-   *   updateAnswer({ min: 10, max: 20 });
-   * }
-   */
-  const updateAnswer = <T extends QuestionType>(
-    value: AnswerForQuestion<T>
-  ) => {
-    currentAnswer.value = value;
-
-    // Clear validation error when user starts typing/changing
-    if (validationError.value) {
-      validationError.value = null;
-    }
-  };
-
-  /**
-   * Validate current answer without submitting.
-   * Uses type assertion based on the current question type.
-   */
-  const validateCurrentAnswer = (): boolean => {
-    if (!currentQuestion.value || currentAnswer.value === undefined) return false;
-
-    // Type assertion is safe here because currentAnswer is set based on question type
-    const result = validateAnswer(
-      currentQuestion.value,
-      currentAnswer.value as AnswerForQuestion<QuestionType>,
-    );
-    validationError.value = result.errorMessage || null;
-    return result.isValid;
-  };
 
   /**
    * Submit the current answer and move to next question.
-   * Uses type assertion based on the current question type.
    */
-  const submitAnswer = (): boolean => {
-    if (!currentQuestion.value || currentAnswer.value === undefined) return false;
-
+  const answerQuestions = (answer: Answer<QuestionType>[]): void => {
     // Type assertion is safe here because currentAnswer is set based on question type
-    const result = engine.answerCurrentQuestion(
-      currentQuestion.value,
-      currentAnswer.value as AnswerForQuestion<QuestionType>
-    );
-
-    if (!result.isValid) {
-      validationError.value = result.errorMessage || 'Invalid answer';
-      return false;
-    }
-
-    // Move to next question
-    engine.next();
-    updateCurrentState();
-    return true;
+    engine.answerQuestions(state, answer);
   };
 
   /**
    * Go to the previous question
    */
   const goBack = (): boolean => {
-    const success = engine.previous();
-    if (success) {
-      updateCurrentState();
-    }
-    return success;
+    return wizard.previous(state);
   };
 
   /**
    * Skip the current question (only if not required)
    */
   const skipQuestion = (): boolean => {
-    if (!currentQuestion.value || currentQuestion.value.required) {
-      return false;
-    }
-
-    // Submit with null/undefined answer
-    return submitAnswer();
+    return wizard.next(state);
   };
 
   /**
    * Get all answers
    */
-  const getAnswers = () => engine.getAnswers();
+  const getAnswers = () => wizard.getAnswers(state);
 
   /**
    * Get answers as object
    */
-  const getAnswersObject = () => engine.getAnswersObject();
+  const getAnswersObject = () => wizard.getAnswersObject(state);
 
   /**
    * Reset the wizard
    */
   const reset = () => {
-    engine.reset();
-    updateCurrentState();
+    engine.reset(config, state);
   };
 
   /**
@@ -156,9 +83,8 @@ export function useWizard(config: WizardConfig) {
 
   return {
     // State
-    currentQuestion,
-    currentAnswer,
-    validationError,
+    currentQuestions,
+    currentAnswers,
     isComplete,
 
     // Computed
@@ -167,9 +93,7 @@ export function useWizard(config: WizardConfig) {
     canGoPrevious,
 
     // Methods
-    updateAnswer,
-    validateCurrentAnswer,
-    submitAnswer,
+    answerQuestions,
     goBack,
     skipQuestion,
     getAnswers,

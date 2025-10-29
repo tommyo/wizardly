@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 import { useWizard } from '../composables/useWizard';
-import type { WizardConfig, Answer, AnswerValue, NumberRange } from '../types';
+import type { Answer, AnswerValue, NumberRange, WizardConfig } from '../types';
 
 // Props
 const { config } = defineProps<{
@@ -48,15 +49,30 @@ const emit = defineEmits<{
 const wizard = useWizard(config);
 
 const {
-  currentQuestion,
-  currentAnswer,
+  currentQuestions,
+  currentAnswers,
   progress,
   isComplete,
   canGoPrevious,
   canGoNext,
 } = wizard;
 
-// const current
+const i = ref(0);
+const currentQuestion = computed(() => currentQuestions.value[i.value]);
+const currentAnswer = computed(() => currentAnswers.value[i.value]);
+
+const next = () => {
+  if (currentQuestions.value.length > i.value + 1) {
+    // if (currentQuestions.value[0]?.type === 'boolean'
+    //   && currentAnswers.value[0].
+    // ) {
+
+    // }
+  }
+  // wizard.
+};
+
+// const boolPersist = ref<Question[]>([]);
 
 // // Handle next button click
 // const handleNext = () => {
@@ -274,7 +290,7 @@ const handleComplete = () => {
             Skip
           </button>
 
-          <button @click="wizard.submitAnswer()" class="btn btn-primary">
+          <button @click="next()" class="btn btn-primary">
             {{ canGoNext ? 'Next' : 'Finish' }}
           </button>
         </div>
