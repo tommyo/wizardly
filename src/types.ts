@@ -115,6 +115,7 @@ export interface Question<T extends QuestionType = QuestionType> {
   id: string;
   type: T;
   question: string;
+  default?: AnswerValueMap[T];
   required?: boolean;
   helpText?: string;
   options?: T extends 'multiple-choice' ? Option[] : never;

@@ -1,15 +1,19 @@
 // useWizard.ts - Vue 3 Composable for wizard management
 
-import { computed, reactive } from 'vue';
+import { computed, reactive, watch, watchEffect } from 'vue';
 import { WizardEngine } from '../wizard-engine';
 import * as wizard from '../wizard-state';
 import type { Question, Answer } from '../types';
-export function useWizard(questions: Question[]) {
+export function useWizard(questions: Question[], answers?: Answer[]) {
 
   const engine = new WizardEngine(questions);
 
   // Create the wizard state
-  const state = reactive(engine.initState());
+  const state = reactive(engine.initState(answers));
+
+  watch(() => [state.flattenedQuestions, state.answers], ([questions, answers]) => {
+    console.log({ questions, answers });
+  });
 
   const currentQuestions = computed(() => wizard.getQuestionSet(state));
 
@@ -26,7 +30,7 @@ export function useWizard(questions: Question[]) {
     return wizard.getProgress(state);
   });
   const canGoNext = computed(() => {
-    return wizard.canGoNext(state);
+    return wizard.canGoNext(state, currentQuestions.value.length);
   });
   const canGoPrevious = computed(() => {
     return wizard.canGoPrevious(state);
@@ -65,10 +69,10 @@ export function useWizard(questions: Question[]) {
   const getAnswersObject = () => wizard.getAnswersObject(state);
 
   /**
-   * Reset the wizard
+   * Reset the wizard. Can also be used to load answers from a previous session
    */
-  const reset = () => {
-    engine.reset(state);
+  const reset = (newAnswers?: Answer[]) => {
+    engine.reset(state, newAnswers ?? answers);
   };
 
   /**

@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import WizardComponent from '../../components/WizardComponent.vue';
-import type { WizardConfig } from '../../types';
+import type { AnswerValue, WizardConfig } from '../../types';
 
-// Example 1: Load from URL
-const showWizard1 = ref(true);
-
-// Example 2: Use inline config
-const showWizard2 = ref(false);
+const showWizard = ref(false);
 
 const inlineConfig: WizardConfig = {
   wizardId: 'quick-survey',
@@ -36,25 +32,47 @@ const inlineConfig: WizardConfig = {
       }
     },
     {
+      id: 'interests',
+      type: 'text',
+      question: 'What are you interested in doing?',
+      required: false,
+      options: [
+        {
+          label: "going out to eat",
+          value: "dining",
+          image: "dining.png"
+        },
+        {
+          label: "going dancing",
+          value: "dancing",
+          image: "dancing.png"
+        },
+      ],
+    },
+    {
       id: 'newsletter',
       type: 'boolean',
       question: 'Would you like to receive our newsletter?',
-      required: false
+      required: false,
+      default: true,
+      conditionalQuestions: [
+        {
+          condition: { operator: 'equals', value: true },
+          question: {
+            id: 'email',
+            type: 'text',
+            question: 'what email should we send it to?',
+            required: true,
+          }
+        }
+      ]
     }
   ]
 };
 
 // Handle wizard completion
-// FIXME make more type aware
-const handleWizardComplete = (answers: Record<string, unknown>) => {
+const handleWizardComplete = (answers: Record<string, AnswerValue>) => {
   console.log('Wizard completed with answers:', answers);
-
-  // Send to API
-  // await fetch('/api/submit-wizard', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(answers)
-  // });
 
   alert('Wizard completed! Check console for answers.');
 };
@@ -71,30 +89,16 @@ const handleWizardCancel = () => {
     <h1>Wizard Component Examples</h1>
 
     <div class="examples">
-      <button @click="showWizard1 = true" class="example-btn">
-        Example 1: Load from JSON URL
-      </button>
-
-      <button @click="showWizard2 = true" class="example-btn">
-        Example 2: Inline Configuration
+      <button @click="showWizard = true" class="example-btn">
+        Example: Inline Configuration
       </button>
     </div>
 
-    <!-- Example 1: Load from URL -->
-    <div v-if="showWizard1" class="modal">
+    <div v-if="showWizard" class="modal">
       <div class="modal-content">
-        <button @click="showWizard1 = false" class="close-btn">×</button>
-        <WizardComponent config-url="/example-wizard.json" @complete="handleWizardComplete"
-          @cancel="() => { showWizard1 = false; handleWizardCancel(); }" />
-      </div>
-    </div>
-
-    <!-- Example 2: Inline Config -->
-    <div v-if="showWizard2" class="modal">
-      <div class="modal-content">
-        <button @click="showWizard2 = false" class="close-btn">×</button>
-        <WizardComponent :config="inlineConfig" @complete="handleWizardComplete"
-          @cancel="() => { showWizard2 = false; handleWizardCancel(); }" />
+        <button @click="showWizard = false" class="close-btn">×</button>
+        <WizardComponent :questions="inlineConfig.questions" @complete="handleWizardComplete"
+          @cancel="() => { showWizard = false; handleWizardCancel(); }" />
       </div>
     </div>
   </div>

@@ -15,19 +15,29 @@ export class WizardEngine {
     this.questions = questions;
   }
 
-  initState(): WizardState {
-    return this.reset({});
+  initState(answers?: Answer[]): WizardState {
+    return this.reset({}, answers);
   }
 
   /**
  * Reset the wizard state
  */
-  reset(state: Partial<WizardState>): WizardState {
+  reset(state: Partial<WizardState>, answers?: Answer[]): WizardState {
     state.currentQuestionIndex = 0;
     state.answers = new Map();
     state.flattenedQuestions = [];
     state.visitedQuestions = [];
     state.isComplete = false;
+
+    if (answers) {
+      const mapped = new Map(answers.map((a) => [a.questionId, a.value]));
+      this.questions.forEach((q) => {
+        if (mapped.has(q.id)) {
+          state.answers?.set(q.id, mapped.get(q.id)!);
+        }
+      });
+    }
+
     this.rebuildQuestionsList(state as WizardState);
     return state as WizardState;
   }
@@ -43,7 +53,7 @@ export class WizardEngine {
       questions.push({ ...q, conditionalParent });
 
       // Check if this question has conditional follow-ups
-      if (q.conditionalQuestions && state.answers.has(q.id)) {
+      if (q.conditionalQuestions) {
         const answer = state.answers.get(q.id);
 
         // Only evaluate conditions if answer exists

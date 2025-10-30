@@ -1,6 +1,6 @@
 // type-guards.ts - Runtime type validation for wizard answer values
 
-import type { NumberRange, DateRange, AnswerForQuestion, QuestionType } from './types';
+import type { NumberRange, DateRange, Answer, QuestionType } from './types';
 
 /**
  * Type guard for text answers
@@ -82,7 +82,7 @@ export function isDateRangeAnswer(value: unknown): value is DateRange {
  */
 export function createAnswerTypeGuard<T extends QuestionType>(
   type: T
-): (value: unknown) => value is AnswerForQuestion<T> {
+): (value: unknown) => value is Answer<T> {
   const guards: Record<QuestionType, (value: unknown) => boolean> = {
     'text': isTextAnswer,
     'boolean': isBooleanAnswer,
@@ -93,7 +93,7 @@ export function createAnswerTypeGuard<T extends QuestionType>(
     'date-range': isDateRangeAnswer,
   };
 
-  return guards[type] as (value: unknown) => value is AnswerForQuestion<T>;
+  return guards[type] as (value: unknown) => value is Answer<T>;
 }
 
 /**

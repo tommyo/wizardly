@@ -90,9 +90,11 @@ export function previous(state: WizardState): boolean {
 
 /**
  * Check if we can go to the next question
+ * accepts a count to account for the number of questions in a question set
  */
-export function canGoNext(state: WizardState): boolean {
-  return state.currentQuestionIndex < state.flattenedQuestions.length;
+export function canGoNext(state: WizardState, count = 1): boolean {
+
+  return state.currentQuestionIndex + count <= state.flattenedQuestions.length;
 }
 
 /**
