@@ -1,10 +1,11 @@
 // useWizard.ts - Vue 3 Composable for wizard management
 
 import { computed, reactive, ref } from 'vue';
+import type { Question, Answer, ValidationResult, AnswerValue } from '../types';
 import { WizardEngine } from '../wizard-engine';
 import * as wizard from '../wizard-state';
-import type { Question, Answer, ValidationResult, AnswerValue } from '../types';
 import { validateAnswer } from '@/validators';
+
 export function useWizard(questions: Question[], answers?: Answer[]) {
 
   const engine = new WizardEngine(questions);

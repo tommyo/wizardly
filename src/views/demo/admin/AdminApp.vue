@@ -21,8 +21,8 @@ const sampleQuestionnaire: WizardConfig = {
       required: true,
       validation: {
         minLength: 2,
-        maxLength: 100
-      }
+        maxLength: 100,
+      },
     },
     {
       id: 'q2',
@@ -33,8 +33,8 @@ const sampleQuestionnaire: WizardConfig = {
         { value: 'engineering', label: 'Engineering' },
         { value: 'marketing', label: 'Marketing' },
         { value: 'sales', label: 'Sales' },
-        { value: 'hr', label: 'Human Resources' }
-      ]
+        { value: 'hr', label: 'Human Resources' },
+      ],
     },
     {
       id: 'q3',
@@ -45,18 +45,18 @@ const sampleQuestionnaire: WizardConfig = {
         {
           condition: {
             operator: 'equals',
-            value: true
+            value: true,
           },
           question: {
             id: 'q3a',
             type: 'text',
             question: 'Please describe the accommodations you need',
-            required: true
-          }
-        }
-      ]
-    }
-  ]
+            required: true,
+          },
+        },
+      ],
+    },
+  ],
 };
 
 // Actions
@@ -71,7 +71,7 @@ function editQuestionnaire(questionnaire: WizardConfig) {
 }
 
 function handleSave(config: WizardConfig) {
-  console.log('Saving questionnaire:', config);
+  // console.log('Saving questionnaire:', config)
 
   // Placeholder for actual save logic
   // In a real app, this would call an API
@@ -129,8 +129,10 @@ function loadSampleQuestionnaire() {
 <template>
   <div class="app">
     <!-- Editor Mode -->
-    <QuestionnaireEditor v-if="showEditor" :initial-config="currentQuestionnaire" @save="handleSave"
-      @cancel="handleCancel" />
+    <QuestionnaireEditor v-if="showEditor"
+                         :initial-config="currentQuestionnaire"
+                         @save="handleSave"
+                         @cancel="handleCancel" />
 
     <!-- List Mode -->
     <div v-else class="list-view">

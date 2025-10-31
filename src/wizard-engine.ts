@@ -35,6 +35,7 @@ export class WizardEngine {
       const mapped = new Map(answers.map((a) => [a.questionId, a.value]));
       this.questions.forEach((q) => {
         if (mapped.has(q.id)) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           state.answers?.set(q.id, mapped.get(q.id)!);
         }
       });
@@ -168,9 +169,10 @@ function evaluateCondition(condition: Condition, answer: AnswerValue): boolean {
     case 'lessThan':
       return Number(answer) < Number(condition.value);
 
-    case 'between':
+    case 'between': {
       const num = Number(answer);
       return num >= condition.value[0] && num <= condition.value[1];
+    }
 
     default:
       return false;

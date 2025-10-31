@@ -18,7 +18,7 @@ const config = ref<WizardConfig>(props.initialConfig || {
   wizardId: generateId(),
   title: 'New Wizard',
   description: '',
-  questions: []
+  questions: [],
 });
 
 const selectedQuestionId = ref<string | null>(null);
@@ -38,7 +38,7 @@ const questionTypes = [
   { value: 'number', label: 'Number', icon: '🔢' },
   { value: 'number-range', label: 'Number Range', icon: '↔️' },
   { value: 'date', label: 'Date', icon: '📅' },
-  { value: 'date-range', label: 'Date Range', icon: '📆' }
+  { value: 'date-range', label: 'Date Range', icon: '📆' },
 ];
 
 const conditionOperators = [
@@ -46,7 +46,7 @@ const conditionOperators = [
   { value: 'contains', label: 'Contains' },
   { value: 'greaterThan', label: 'Greater Than' },
   { value: 'lessThan', label: 'Less Than' },
-  { value: 'between', label: 'Between' }
+  { value: 'between', label: 'Between' },
 ];
 
 // Utility Functions
@@ -73,7 +73,7 @@ function addQuestion() {
     id: generateId(),
     type: 'text',
     question: 'New Question',
-    required: false
+    required: false,
   };
   config.value.questions.push(newQuestion);
   selectedQuestionId.value = newQuestion.id;
@@ -113,7 +113,7 @@ function addOption(question: Question) {
   }
   question.options.push({
     value: `option_${question.options.length + 1}`,
-    label: `Option ${question.options.length + 1}`
+    label: `Option ${question.options.length + 1}`,
   });
 }
 
@@ -132,14 +132,14 @@ function addConditionalQuestion(question: Question) {
   const newConditional: ConditionalQuestion = {
     condition: {
       operator: 'equals',
-      value: true
+      value: true,
     },
     question: {
       id: generateId(),
       type: 'text',
       question: 'Follow-up Question',
-      required: false
-    }
+      required: false,
+    },
   };
 
   question.conditionalQuestions.push(newConditional);
@@ -222,7 +222,7 @@ function handleImport(event: Event) {
 // }
 
 function saveQuestionnaire() {
-  console.log('Save questionnaire:', config.value);
+  // console.log('Save questionnaire:', config.value)
   // TODO: Implement API call to save questionnaire
   // await fetch('/api/questionnaires', {
   //   method: 'POST',
@@ -239,7 +239,10 @@ function saveQuestionnaire() {
     <div class="admin-header">
       <div class="header-left">
         <h1>Questionnaire Editor</h1>
-        <input v-model="config.title" type="text" class="title-input" placeholder="Wizard Title" />
+        <input v-model="config.title"
+               type="text"
+               class="title-input"
+               placeholder="Wizard Title" />
       </div>
       <div class="header-actions">
         <button @click="showPreview = !showPreview" class="btn btn-secondary">
@@ -247,7 +250,10 @@ function saveQuestionnaire() {
         </button>
         <label class="btn btn-secondary">
           Import
-          <input type="file" accept=".json" @change="handleImport" style="display: none" />
+          <input type="file"
+                 accept=".json"
+                 @change="handleImport"
+                 style="display: none" />
         </label>
         <button @click="handleExport" class="btn btn-secondary">
           Export
@@ -263,8 +269,10 @@ function saveQuestionnaire() {
 
     <!-- Description -->
     <div class="description-section">
-      <textarea v-model="config.description" class="description-input" placeholder="Wizard Description (optional)"
-        rows="2"></textarea>
+      <textarea v-model="config.description"
+                class="description-input"
+                placeholder="Wizard Description (optional)"
+                rows="2"></textarea>
     </div>
 
     <div class="admin-body">
@@ -278,10 +286,15 @@ function saveQuestionnaire() {
         </div>
 
         <div class="questions-list">
-          <div v-for="(question, index) in config.questions" :key="question.id" class="question-item"
-            :class="{ 'active': selectedQuestionId === question.id }" draggable="true"
-            @dragstart="handleDragStart(index)" @dragover="handleDragOver($event, index)" @dragend="handleDragEnd"
-            @click="selectedQuestionId = question.id">
+          <div v-for="(question, index) in config.questions"
+               :key="question.id"
+               class="question-item"
+               :class="{ 'active': selectedQuestionId === question.id }"
+               draggable="true"
+               @dragstart="handleDragStart(index)"
+               @dragover="handleDragOver($event, index)"
+               @dragend="handleDragEnd"
+               @click="selectedQuestionId = question.id">
             <div class="question-handle">☰</div>
             <div class="question-info">
               <div class="question-number">Q{{ index + 1 }}</div>
@@ -333,14 +346,18 @@ function saveQuestionnaire() {
 
             <div class="form-group">
               <label>Question Text *</label>
-              <input v-model="selectedQuestion.question" type="text" class="form-control"
-                placeholder="Enter your question" />
+              <input v-model="selectedQuestion.question"
+                     type="text"
+                     class="form-control"
+                     placeholder="Enter your question" />
             </div>
 
             <div class="form-group">
               <label>Help Text</label>
-              <input v-model="selectedQuestion.helpText" type="text" class="form-control"
-                placeholder="Optional help text to guide the user" />
+              <input v-model="selectedQuestion.helpText"
+                     type="text"
+                     class="form-control"
+                     placeholder="Optional help text to guide the user" />
             </div>
 
             <div class="form-group">
@@ -365,8 +382,14 @@ function saveQuestionnaire() {
             <div class="options-list">
               <div v-for="(option, index) in selectedQuestion.options" :key="index" class="option-item">
                 <span class="option-number">{{ index + 1 }}</span>
-                <input v-model="option.value" type="text" class="form-control option-value" placeholder="Value" />
-                <input v-model="option.label" type="text" class="form-control option-label" placeholder="Label" />
+                <input v-model="option.value"
+                       type="text"
+                       class="form-control option-value"
+                       placeholder="Value" />
+                <input v-model="option.label"
+                       type="text"
+                       class="form-control option-label"
+                       placeholder="Label" />
                 <button @click="removeOption(selectedQuestion, index)" class="btn btn-small btn-danger">
                   Remove
                 </button>
@@ -386,18 +409,27 @@ function saveQuestionnaire() {
             <div v-if="selectedQuestion.type === 'text'">
               <div class="form-group">
                 <label>Minimum Length</label>
-                <input v-model.number="selectedQuestion.validation!.minLength" type="number" class="form-control"
-                  placeholder="Minimum characters" @focus="ensureValidation(selectedQuestion)" />
+                <input v-model.number="selectedQuestion.validation!.minLength"
+                       type="number"
+                       class="form-control"
+                       placeholder="Minimum characters"
+                       @focus="ensureValidation(selectedQuestion)" />
               </div>
               <div class="form-group">
                 <label>Maximum Length</label>
-                <input v-model.number="selectedQuestion.validation!.maxLength" type="number" class="form-control"
-                  placeholder="Maximum characters" @focus="ensureValidation(selectedQuestion)" />
+                <input v-model.number="selectedQuestion.validation!.maxLength"
+                       type="number"
+                       class="form-control"
+                       placeholder="Maximum characters"
+                       @focus="ensureValidation(selectedQuestion)" />
               </div>
               <div class="form-group">
                 <label>Pattern (Regex)</label>
-                <input v-model="selectedQuestion.validation!.pattern" type="text" class="form-control"
-                  placeholder="e.g., ^[A-Za-z]+$" @focus="ensureValidation(selectedQuestion)" />
+                <input v-model="selectedQuestion.validation!.pattern"
+                       type="text"
+                       class="form-control"
+                       placeholder="e.g., ^[A-Za-z]+$"
+                       @focus="ensureValidation(selectedQuestion)" />
               </div>
             </div>
 
@@ -405,13 +437,17 @@ function saveQuestionnaire() {
             <div v-if="selectedQuestion.type === 'number' || selectedQuestion.type === 'number-range'">
               <div class="form-group">
                 <label>Minimum Value</label>
-                <input v-model.number="selectedQuestion.validation!.min" type="number" class="form-control"
-                  @focus="ensureValidation(selectedQuestion)" />
+                <input v-model.number="selectedQuestion.validation!.min"
+                       type="number"
+                       class="form-control"
+                       @focus="ensureValidation(selectedQuestion)" />
               </div>
               <div class="form-group">
                 <label>Maximum Value</label>
-                <input v-model.number="selectedQuestion.validation!.max" type="number" class="form-control"
-                  @focus="ensureValidation(selectedQuestion)" />
+                <input v-model.number="selectedQuestion.validation!.max"
+                       type="number"
+                       class="form-control"
+                       @focus="ensureValidation(selectedQuestion)" />
               </div>
             </div>
 
@@ -419,21 +455,30 @@ function saveQuestionnaire() {
             <div v-if="selectedQuestion.type === 'date' || selectedQuestion.type === 'date-range'">
               <div class="form-group">
                 <label>Minimum Date</label>
-                <input v-model="selectedQuestion.validation!.minDate" type="text" class="form-control"
-                  placeholder="YYYY-MM-DD or 'today'" @focus="ensureValidation(selectedQuestion)" />
+                <input v-model="selectedQuestion.validation!.minDate"
+                       type="text"
+                       class="form-control"
+                       placeholder="YYYY-MM-DD or 'today'"
+                       @focus="ensureValidation(selectedQuestion)" />
               </div>
               <div class="form-group">
                 <label>Maximum Date</label>
-                <input v-model="selectedQuestion.validation!.maxDate" type="text" class="form-control"
-                  placeholder="YYYY-MM-DD or 'today'" @focus="ensureValidation(selectedQuestion)" />
+                <input v-model="selectedQuestion.validation!.maxDate"
+                       type="text"
+                       class="form-control"
+                       placeholder="YYYY-MM-DD or 'today'"
+                       @focus="ensureValidation(selectedQuestion)" />
               </div>
             </div>
 
             <!-- Custom Message -->
             <div class="form-group">
               <label>Custom Error Message</label>
-              <input v-model="selectedQuestion.validation!.customMessage" type="text" class="form-control"
-                placeholder="Custom validation error message" @focus="ensureValidation(selectedQuestion)" />
+              <input v-model="selectedQuestion.validation!.customMessage"
+                     type="text"
+                     class="form-control"
+                     placeholder="Custom validation error message"
+                     @focus="ensureValidation(selectedQuestion)" />
             </div>
           </div>
 
@@ -444,8 +489,9 @@ function saveQuestionnaire() {
               Add questions that appear based on the answer to this question
             </p>
 
-            <div v-for="(conditional, index) in selectedQuestion.conditionalQuestions" :key="index"
-              class="conditional-item">
+            <div v-for="(conditional, index) in selectedQuestion.conditionalQuestions"
+                 :key="index"
+                 class="conditional-item">
               <div class="conditional-header">
                 <h4>Follow-up {{ index + 1 }}</h4>
                 <button @click="removeConditionalQuestion(selectedQuestion, index)" class="btn btn-small btn-danger">
@@ -461,15 +507,19 @@ function saveQuestionnaire() {
                       {{ op.label }}
                     </option>
                   </select>
-                  <input v-model="conditional.condition.value" type="text" class="form-control"
-                    placeholder="Value to match" />
+                  <input v-model="conditional.condition.value"
+                         type="text"
+                         class="form-control"
+                         placeholder="Value to match" />
                 </div>
               </div>
 
               <div class="form-group">
                 <label>Follow-up Question</label>
-                <input v-model="conditional.question.question" type="text" class="form-control"
-                  placeholder="Question text" />
+                <input v-model="conditional.question.question"
+                       type="text"
+                       class="form-control"
+                       placeholder="Question text" />
               </div>
 
               <div class="form-group">

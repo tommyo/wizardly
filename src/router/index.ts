@@ -1,6 +1,6 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import ExampleApp from '../views/demo/ExampleApp.vue'
-import AdminApp from '../views/demo/admin/AdminApp.vue'
+import { createRouter, createWebHistory } from 'vue-router';
+import AdminApp from '../views/demo/admin/AdminApp.vue';
+import ExampleApp from '../views/demo/ExampleApp.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -8,14 +8,14 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: ExampleApp
+      component: ExampleApp,
     },
     {
       path: '/admin',
       name: 'admin',
-      component: AdminApp
-    }
-  ]
-})
+      component: AdminApp,
+    },
+  ],
+});
 
-export default router
+export default router;

@@ -1,7 +1,7 @@
 // wizard-engine.spec.ts - Tests for WizardEngine class
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import type { Question, Answer } from '../types';
 import { WizardEngine } from '../wizard-engine';
-import type { Question, WizardState, Answer } from '../types';
 
 describe('WizardEngine', () => {
   describe('Initialization', () => {

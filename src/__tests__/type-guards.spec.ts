@@ -169,29 +169,29 @@ describe('Type Guards', () => {
     it('should return true for valid date range objects', () => {
       expect(isDateRangeAnswer({
         start: '2024-01-01',
-        end: '2024-12-31'
+        end: '2024-12-31',
       })).toBe(true);
 
       expect(isDateRangeAnswer({
         start: '2024-01-01T00:00:00Z',
-        end: '2024-01-01T23:59:59Z'
+        end: '2024-01-01T23:59:59Z',
       })).toBe(true);
     });
 
     it('should return false for objects with invalid date strings', () => {
       expect(isDateRangeAnswer({
         start: 'not-a-date',
-        end: '2024-12-31'
+        end: '2024-12-31',
       })).toBe(false);
 
       expect(isDateRangeAnswer({
         start: '2024-01-01',
-        end: 'invalid'
+        end: 'invalid',
       })).toBe(false);
 
       expect(isDateRangeAnswer({
         start: 'invalid',
-        end: 'also-invalid'
+        end: 'also-invalid',
       })).toBe(false);
     });
 
@@ -204,12 +204,12 @@ describe('Type Guards', () => {
     it('should return false for objects with non-string start or end', () => {
       expect(isDateRangeAnswer({
         start: 123,
-        end: '2024-12-31'
+        end: '2024-12-31',
       })).toBe(false);
 
       expect(isDateRangeAnswer({
         start: '2024-01-01',
-        end: new Date()
+        end: new Date(),
       })).toBe(false);
     });
 
@@ -268,7 +268,7 @@ describe('Type Guards', () => {
       const guard = createAnswerTypeGuard('date-range');
       expect(guard({
         start: '2024-01-01',
-        end: '2024-12-31'
+        end: '2024-12-31',
       })).toBe(true);
       expect(guard({ start: '2024-01-01' })).toBe(false);
       expect(guard('range')).toBe(false);
@@ -393,7 +393,7 @@ describe('Type Guards', () => {
       it('should validate date range objects', () => {
         const result = validateAnswerType('date-range', {
           start: '2024-01-01',
-          end: '2024-12-31'
+          end: '2024-12-31',
         });
         expect(result.isValid).toBe(true);
       });
@@ -401,7 +401,7 @@ describe('Type Guards', () => {
       it('should reject invalid date range objects', () => {
         const result = validateAnswerType('date-range', {
           start: 'invalid',
-          end: '2024-12-31'
+          end: '2024-12-31',
         });
         expect(result.isValid).toBe(false);
         expect(result.errorMessage).toBe('Expected an object with start and end date strings, but received object');
@@ -446,7 +446,7 @@ describe('Type Guards', () => {
         'multiple-choice',
         'number-range',
         'date',
-        'date-range'
+        'date-range',
       ];
 
       it('should have validation for all question types', () => {

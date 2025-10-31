@@ -4,7 +4,7 @@ import type {
   ProgressReport,
   Question,
   WizardState,
-} from "./types";
+} from './types';
 
 /**
  * Get the current question

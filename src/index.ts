@@ -1,4 +1,4 @@
-// Main entry point for the Wizardly library
+// Main entry point for the Wizarding library
 
 // Core types
 export type {

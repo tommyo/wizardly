@@ -1,15 +1,15 @@
 {
-  "name": "wizardly",
+  "name": "wizarding",
   "version": "1.0.0",
-  "description": "A flexible, type-safe wizard/questionnaire component for Vue 3",
+  "description": "A flexible, type-safe wizard/questionnaire component with Vue 3 support",
   "type": "module",
-  "main": "./dist/wizardly.umd.cjs",
-  "module": "./dist/wizardly.js",
+  "main": "./dist/wizarding.umd.cjs",
+  "module": "./dist/wizarding.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/wizardly.js",
-      "require": "./dist/wizardly.umd.cjs",
+      "import": "./dist/wizarding.js",
+      "require": "./dist/wizarding.umd.cjs",
       "types": "./dist/index.d.ts"
     },
     "./style.css": "./dist/style.css"
@@ -28,18 +28,19 @@
     "survey",
     "typescript",
     "composable",
-    "pinia"
+    "pinia",
+    "ai"
   ],
   "author": "TommyO <tomm@huffduff.net>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tommyo/wizardly.git"
+    "url": "https://github.com/tommyo/wizarding.git"
   },
   "bugs": {
-    "url": "https://github.com/tommyo/wizardly/issues"
+    "url": "https://github.com/tommyo/wizarding/issues"
   },
-  "homepage": "https://github.com/tommyo/wizardly#readme",
+  "homepage": "https://github.com/tommyo/wizarding#readme",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
@@ -54,11 +55,14 @@
     "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix --cache",
     "lint": "run-s lint:*",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "release:patch": "npm version patch -m 'Release v%s'",
+    "release:minor": "npm version patch -m 'Release v%s'",
+    "release:major": "npm version patch -m 'Release v%s'"
   },
   "peerDependencies": {
-    "vue": "^3.5.0",
-    "pinia": "^3.0.0"
+    "pinia": "^3.0.0",
+    "vue": "^3.5.0"
   },
   "peerDependenciesMeta": {
     "pinia": {
@@ -69,16 +73,20 @@
     "@vueuse/core": "^14.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.38.0",
     "@playwright/test": "^1.56.1",
     "@tsconfig/node22": "^22.0.2",
     "@types/jsdom": "^27.0.0",
     "@types/node": "^22.18.11",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vitest/eslint-plugin": "^1.3.23",
     "@vue/eslint-config-typescript": "^14.6.0",
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.8.1",
     "eslint": "^9.37.0",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-oxlint": "~1.23.0",
     "eslint-plugin-playwright": "^2.2.2",
     "eslint-plugin-vue": "~10.5.0",

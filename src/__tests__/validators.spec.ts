@@ -1,7 +1,7 @@
 // validators.spec.ts - Tests for answer validation
 import { describe, it, expect } from 'vitest';
-import { validateAnswer } from '../validators';
 import type { Question, NumberRange, DateRange } from '../types';
+import { validateAnswer } from '../validators';
 
 describe('Validators', () => {
   describe('validateAnswer - Required Field Validation', () => {

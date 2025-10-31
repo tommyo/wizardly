@@ -1,6 +1,8 @@
+
 // type-guards.ts - Runtime type validation for wizard answer values
 
-import type { NumberRange, DateRange, Answer, QuestionType, AnswerValueMap } from './types';
+import type { NumberRange, DateRange, QuestionType, AnswerValueMap } from './types';
+import { isValidDateString, isValidNumberRange } from './validators';
 
 /**
  * Type guard for text answers
@@ -35,14 +37,11 @@ export function isMultipleChoiceAnswer(value: unknown): value is string | string
  * Type guard for number range answers
  */
 export function isNumberRangeAnswer(value: unknown): value is NumberRange {
-  return typeof value === 'object' &&
-    value !== null &&
-    'min' in value &&
-    'max' in value &&
-    typeof (value as NumberRange).min === 'number' &&
-    typeof (value as NumberRange).max === 'number' &&
-    !isNaN((value as NumberRange).min) &&
-    !isNaN((value as NumberRange).max);
+  if (typeof value !== 'object' || value === null) return false;
+  if (!('min' in value) || !('max' in value)) return false;
+
+  const range = value as NumberRange;
+  return isValidNumberRange(range);
 }
 
 /**
@@ -50,33 +49,7 @@ export function isNumberRangeAnswer(value: unknown): value is NumberRange {
  */
 export function isDateAnswer(value: unknown): value is string {
   if (typeof value !== 'string') return false;
-  const date = new Date(value);
-
-  if (isNaN(date.getTime())) return false;
-
-  // For ISO format dates, verify the date wasn't adjusted (e.g., Feb 30 -> Mar 2)
-  if (value.match(/^\d{4}-\d{2}-\d{2}/)) {
-    const datePart = value.split('T')[0];
-    if (!datePart) return false;
-
-    const parts = datePart.split('-');
-    if (parts.length !== 3) return false;
-
-    const year = parseInt(parts[0]!, 10);
-    const month = parseInt(parts[1]!, 10);
-    const day = parseInt(parts[2]!, 10);
-
-    if (month < 1 || month > 12 || day < 1 || day > 31) return false;
-
-    // Verify the date wasn't adjusted
-    if (date.getUTCFullYear() !== year ||
-      date.getUTCMonth() + 1 !== month ||
-      date.getUTCDate() !== day) {
-      return false;
-    }
-  }
-
-  return true;
+  return isValidDateString(value);
 }
 
 /**
@@ -84,14 +57,13 @@ export function isDateAnswer(value: unknown): value is string {
  */
 export function isDateRangeAnswer(value: unknown): value is DateRange {
   if (typeof value !== 'object' || value === null) return false;
+  if (!('start' in value) || !('end' in value)) return false;
 
   const range = value as DateRange;
-  return 'start' in range &&
-    'end' in range &&
-    typeof range.start === 'string' &&
+  return typeof range.start === 'string' &&
     typeof range.end === 'string' &&
-    !isNaN(new Date(range.start).getTime()) &&
-    !isNaN(new Date(range.end).getTime());
+    isValidDateString(range.start) &&
+    isValidDateString(range.end);
 }
 
 /**
@@ -106,7 +78,7 @@ export function isDateRangeAnswer(value: unknown): value is DateRange {
  * }
  */
 export function createAnswerTypeGuard<T extends QuestionType>(
-  type: T
+  type: T,
 ): (value: unknown) => value is AnswerValueMap[T] {
   const guards: Record<QuestionType, (value: unknown) => boolean> = {
     'text': isTextAnswer,
@@ -133,7 +105,7 @@ export function createAnswerTypeGuard<T extends QuestionType>(
  */
 export function validateAnswerType(
   questionType: QuestionType,
-  value: unknown
+  value: unknown,
 ): { isValid: boolean; errorMessage?: string } {
   const guard = createAnswerTypeGuard(questionType);
 
@@ -153,6 +125,6 @@ export function validateAnswerType(
 
   return {
     isValid: false,
-    errorMessage: `Expected ${expectedTypes[questionType]}, but received ${typeof value}`
+    errorMessage: `Expected ${expectedTypes[questionType]}, but received ${typeof value}`,
   };
 }

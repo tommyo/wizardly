@@ -1,4 +1,4 @@
-# Wizardly - Type-Safe Wizard Component for Vue 3
+# Wizarding - Type-Safe Wizard Component for Vue 3
 
 A flexible, type-safe wizard/questionnaire component for Vue 3 that handles various question types, conditional logic, validation, and navigation with full TypeScript support.
 
@@ -33,9 +33,9 @@ A flexible, type-safe wizard/questionnaire component for Vue 3 that handles vari
 ## Installation
 
 ```bash
-npm install wizardly
+npm install wizarding
 # or
-pnpm add wizardly
+pnpm add wizarding
 ```
 
 ### Manual Installation
@@ -61,8 +61,8 @@ src/
 ### 1. Import the Library
 
 ```typescript
-import { useWizard, WizardComponent } from 'wizardly';
-import type { Question } from 'wizardly';
+import { useWizard, WizardComponent } from 'wizarding';
+import type { Question } from 'wizarding';
 ```
 
 ### 2. Create a JSON Configuration
@@ -834,6 +834,6 @@ MIT
 
 ## Links
 
-- [GitHub Repository](https://github.com/tommyo/wizardly)
-- [Issue Tracker](https://github.com/tommyo/wizardly/issues)
-- [Documentation](https://github.com/tommyo/wizardly/blob/main/README.md)
+- [GitHub Repository](https://github.com/tommyo/wizarding)
+- [Issue Tracker](https://github.com/tommyo/wizarding/issues)
+- [Documentation](https://github.com/tommyo/wizarding/blob/main/README.md)

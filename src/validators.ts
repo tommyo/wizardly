@@ -1,4 +1,4 @@
-import type { AnswerValueMap, DateRange, NumberRange, Question, QuestionType, Validation, ValidationResult } from "./types";
+import type { AnswerValueMap, DateRange, NumberRange, Question, QuestionType, Validation, ValidationResult } from './types';
 
 /**
  * Validate an answer for a given question with type safety.
@@ -11,7 +11,7 @@ import type { AnswerValueMap, DateRange, NumberRange, Question, QuestionType, Va
  */
 export function validateAnswer<T extends QuestionType>(
   question: Question<T>,
-  answer: AnswerValueMap[T] | null | undefined
+  answer: AnswerValueMap[T] | null | undefined,
 ): ValidationResult {
   // Check if required
   if (question.required && (answer === null || answer === undefined || answer === '')) {
@@ -96,14 +96,30 @@ function validateNumber(value: number, validation: Validation): ValidationResult
   return { isValid: true };
 }
 
-function validateNumberRange(value: NumberRange, validation: Validation): ValidationResult {
+/**
+ * Helper function to validate a number range structure
+ * Used by both validators and type guards
+ */
+export function isValidNumberRange(value: NumberRange): boolean {
   if (value.min === null || value.min === undefined || value.max === null || value.max === undefined) {
+    return false;
+  }
+  if (typeof value.min !== 'number' || typeof value.max !== 'number') {
+    return false;
+  }
+  if (isNaN(value.min) || isNaN(value.max)) {
+    return false;
+  }
+  return true;
+}
+
+function validateNumberRange(value: NumberRange, validation: Validation): ValidationResult {
+  if (!isValidNumberRange(value)) {
     return {
       isValid: false,
       error: new Error('Both minimum and maximum values are required'),
     };
   }
-
   if (value.min > value.max) {
     return {
       isValid: false,
@@ -128,61 +144,54 @@ function validateNumberRange(value: NumberRange, validation: Validation): Valida
   return { isValid: true };
 }
 
-function validateDate(value: string, validation: Validation): ValidationResult {
+/**
+ * Helper function to validate a date string format
+ * Used by both validators and type guards
+ */
+export function isValidDateString(value: string): boolean {
   const date = new Date(value);
 
   if (isNaN(date.getTime())) {
-    return {
-      isValid: false,
-      error: new Error('Invalid date'),
-    };
+    return false;
   }
 
-  // Additional validation: check if the date string round-trips correctly
-  // This catches cases like '2024-02-30' which JavaScript converts to '2024-03-01'
-  const isoString = date.toISOString();
-  const inputDate = new Date(value);
-  inputDate.setHours(0, 0, 0, 0);
-  const parsedDate = new Date(isoString);
-  parsedDate.setHours(0, 0, 0, 0);
-
-  // For ISO format dates, verify the input matches expected format
+  // For ISO format dates, verify the date wasn't adjusted (e.g., Feb 30 -> Mar 2)
   if (value.match(/^\d{4}-\d{2}-\d{2}/)) {
     const datePart = value.split('T')[0];
-    if (!datePart) {
-      return {
-        isValid: false,
-        error: new Error('Invalid date'),
-      };
-    }
+    if (!datePart) return false;
+
     const parts = datePart.split('-');
-    if (parts.length !== 3) {
-      return {
-        isValid: false,
-        error: new Error('Invalid date'),
-      };
-    }
+    if (parts.length !== 3) return false;
+
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const year = parseInt(parts[0]!, 10);
     const month = parseInt(parts[1]!, 10);
     const day = parseInt(parts[2]!, 10);
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
 
     if (month < 1 || month > 12 || day < 1 || day > 31) {
-      return {
-        isValid: false,
-        error: new Error('Invalid date'),
-      };
+      return false;
     }
 
     // Verify the date wasn't adjusted (e.g., Feb 30 -> Mar 2)
     if (date.getUTCFullYear() !== year ||
       date.getUTCMonth() + 1 !== month ||
       date.getUTCDate() !== day) {
-      return {
-        isValid: false,
-        error: new Error('Invalid date'),
-      };
+      return false;
     }
   }
+
+  return true;
+}
+
+function validateDate(value: string, validation: Validation): ValidationResult {
+  if (!isValidDateString(value)) {
+    return {
+      isValid: false,
+      error: new Error('Invalid date'),
+    };
+  }
+  const date = new Date(value);
 
   if (validation.minDate) {
     // Normalize both dates to UTC midnight for comparison

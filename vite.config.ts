@@ -1,9 +1,9 @@
-import { fileURLToPath, URL } from 'node:url'
-import { resolve } from 'node:path'
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
-import dts from 'vite-plugin-dts'
+import { resolve } from 'node:path';
+import { fileURLToPath, URL } from 'node:url';
+import vue from '@vitejs/plugin-vue';
+import { defineConfig } from 'vite';
+import dts from 'vite-plugin-dts';
+import vueDevTools from 'vite-plugin-vue-devtools';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -19,7 +19,7 @@ export default defineConfig({
         'src/type-guards.ts',
         'src/composables/**/*.ts',
         'src/components/**/*.vue',
-        'src/index.ts'
+        'src/index.ts',
       ],
       exclude: [
         'src/**/*.spec.ts',
@@ -29,7 +29,7 @@ export default defineConfig({
         'src/router/**/*',
         'src/stores/counter.ts',
         'src/views/**/*',
-        'env.d.ts'
+        'env.d.ts',
       ],
       rollupTypes: true,
       tsconfigPath: './tsconfig.lib.json',
@@ -37,14 +37,14 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'Wizardly',
-      fileName: (format) => `wizardly.${format === 'es' ? 'js' : 'umd.cjs'}`,
+      name: 'Wizarding',
+      fileName: (format) => `wizarding.${format === 'es' ? 'js' : 'umd.cjs'}`,
     },
     rollupOptions: {
       // Externalize deps that shouldn't be bundled
@@ -63,4 +63,4 @@ export default defineConfig({
     // Ensure compatibility
     target: 'es2020',
   },
-})
+});

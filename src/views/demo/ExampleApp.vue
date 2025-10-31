@@ -1,3 +1,4 @@
+<!-- eslint-disable no-console -->
 <script setup lang="ts">
 import { ref } from 'vue';
 import WizardComponent from '../../components/WizardComponent.vue';
@@ -17,8 +18,8 @@ const inlineConfig: WizardConfig = {
       required: true,
       validation: {
         minLength: 2,
-        maxLength: 50
-      }
+        maxLength: 50,
+      },
     },
     {
       id: 'age',
@@ -28,8 +29,8 @@ const inlineConfig: WizardConfig = {
       validation: {
         min: 18,
         max: 120,
-        customMessage: 'You must be at least 18 years old'
-      }
+        customMessage: 'You must be at least 18 years old',
+      },
     },
     {
       id: 'interests',
@@ -38,14 +39,14 @@ const inlineConfig: WizardConfig = {
       required: false,
       options: [
         {
-          label: "going out to eat",
-          value: "dining",
-          image: "dining.png"
+          label: 'going out to eat',
+          value: 'dining',
+          image: 'dining.png',
         },
         {
-          label: "going dancing",
-          value: "dancing",
-          image: "dancing.png"
+          label: 'going dancing',
+          value: 'dancing',
+          image: 'dancing.png',
         },
       ],
     },
@@ -63,17 +64,16 @@ const inlineConfig: WizardConfig = {
             type: 'text',
             question: 'what email should we send it to?',
             required: true,
-          }
-        }
-      ]
-    }
-  ]
+          },
+        },
+      ],
+    },
+  ],
 };
 
 // Handle wizard completion
 const handleWizardComplete = (answers: Record<string, AnswerValue>) => {
   console.log('Wizard completed with answers:', answers);
-
   alert('Wizard completed! Check console for answers.');
 };
 
@@ -97,8 +97,9 @@ const handleWizardCancel = () => {
     <div v-if="showWizard" class="modal">
       <div class="modal-content">
         <button @click="showWizard = false" class="close-btn">×</button>
-        <WizardComponent :questions="inlineConfig.questions" @complete="handleWizardComplete"
-          @cancel="() => { showWizard = false; handleWizardCancel(); }" />
+        <WizardComponent :questions="inlineConfig.questions"
+                         @complete="handleWizardComplete"
+                         @cancel="() => { showWizard = false; handleWizardCancel(); }" />
       </div>
     </div>
   </div>

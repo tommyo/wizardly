@@ -1,6 +1,6 @@
-# Publishing Guide for Wizardly
+# Publishing Guide for Wizarding
 
-This guide explains how to publish the Wizardly package to npm.
+This guide explains how to publish the Wizarding package to npm.
 
 ## Prerequisites
 
@@ -73,10 +73,10 @@ Before publishing, test the package locally:
 # Create a tarball
 npm pack
 
-# This creates a file like wizardly-1.0.0.tgz
+# This creates a file like wizarding-1.0.0.tgz
 # Install it in a test project:
 cd /path/to/test-project
-npm install /path/to/wizardly/wizardly-1.0.0.tgz
+npm install /path/to/wizarding/wizarding-1.0.0.tgz
 ```
 
 ### 3. Publish to npm
@@ -95,10 +95,10 @@ For the first publication, if the package name is available, it will be publishe
 
 After publishing:
 
-1. Check your package page: `https://www.npmjs.com/package/wizardly`
+1. Check your package page: `https://www.npmjs.com/package/wizarding`
 2. Try installing it in a test project:
    ```bash
-   npm install wizardly
+   npm install wizarding
    ```
 
 ## Publishing a Beta/Alpha Version
@@ -115,7 +115,7 @@ npm publish --tag beta
 
 Users can install beta versions with:
 ```bash
-npm install wizardly@beta
+npm install wizarding@beta
 ```
 
 ## Updating After Publication
@@ -133,56 +133,90 @@ You can unpublish within 72 hours of publication:
 
 ```bash
 # Unpublish a specific version
-npm unpublish wizardly@1.0.0
+npm unpublish wizarding@1.0.0
 
 # Unpublish entire package (use with extreme caution)
-npm unpublish wizardly --force
+npm unpublish wizarding --force
 ```
 
 **Note**: Unpublishing is discouraged as it can break projects depending on your package. Use deprecation instead:
 
 ```bash
-npm deprecate wizardly@1.0.0 "This version has a critical bug, please upgrade to 1.0.1"
+npm deprecate wizarding@1.0.0 "This version has a critical bug, please upgrade to 1.0.1"
 ```
 
-## Automated Publishing with GitHub Actions (Optional)
+## Automated Publishing with GitHub Actions
 
-Create `.github/workflows/publish.yml`:
+The repository includes automated GitHub Actions workflows for CI/CD:
 
-```yaml
-name: Publish to npm
+### Setup Required
 
-on:
-  release:
-    types: [created]
+1. **Create an npm Access Token**:
+   - Go to [npmjs.com](https://www.npmjs.com) and log in
+   - Navigate to Access Tokens in your account settings
+   - Click "Generate New Token" → "Classic Token"
+   - Select "Automation" type (for CI/CD)
+   - Copy the generated token
 
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+2. **Add Token to GitHub Secrets**:
+   - Go to your GitHub repository
+   - Navigate to Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `NPM_TOKEN`
+   - Value: Paste your npm token
+   - Click "Add secret"
+
+### Workflows
+
+#### 1. CI Workflow (`.github/workflows/ci.yml`)
+
+Runs on every push and pull request to `main` or `develop` branches:
+- Tests on Node.js 20 and 22
+- Runs linters (oxlint + eslint)
+- Performs type checking
+- Runs unit tests
+- Runs e2e tests with Playwright
+- Builds the package
+- Verifies package contents
+
+#### 2. Publish Workflow (`.github/workflows/publish.yml`)
+
+Automatically publishes to npm when you push a version tag:
+
+**How to Publish**:
+
+```bash
+# 1. Update version in package.json
+npm version patch  # or minor, or major
+
+# 2. Push the tag to GitHub
+git push origin v1.0.1  # replace with your version
+
+# 3. The workflow will automatically:
+#    - Run full test suite
+#    - Build the package
+#    - Publish to npm with provenance
+#    - Create a GitHub release
 ```
 
-Then add your npm token to GitHub repository secrets as `NPM_TOKEN`.
+**Features**:
+- Full test suite before publishing
+- npm provenance for supply chain security
+- Automatic GitHub release creation
+- Package verification before publish
+
+### Manual Publishing (Alternative)
+
+If you prefer manual publishing, follow the steps in the "Publishing Steps" section above.
 
 ## Package Scope (Optional)
 
-If you want to publish under a scope (e.g., `@tommyo/wizardly`):
+If you want to publish under a scope (e.g., `@tommyo/wizarding`):
 
 1. Update `package.json`:
    ```json
    {
-     "name": "@tommyo/wizardly"
+     "name": "@tommyo/wizarding"
    }
    ```
 
@@ -205,12 +239,12 @@ If you want to publish under a scope (e.g., `@tommyo/wizardly`):
 
 ### "You do not have permission to publish"
 - Ensure you're logged in: `npm whoami`
-- Check package name isn't taken: `npm view wizardly`
+- Check package name isn't taken: `npm view wizarding`
 - Verify you have publish rights if it's a scoped package
 
 ### "Package name too similar to existing package"
 - Choose a more unique name
-- Consider using a scope: `@username/wizardly`
+- Consider using a scope: `@username/wizarding`
 
 ### Build fails before publish
 - Check the `prepublishOnly` script runs successfully
@@ -223,5 +257,5 @@ For issues with npm publishing:
 - [npm Documentation](https://docs.npmjs.com/)
 - [npm Support](https://www.npmjs.com/support)
 
-For issues with the Wizardly package:
-- [GitHub Issues](https://github.com/tommyo/wizardly/issues)
+For issues with the Wizarding package:
+- [GitHub Issues](https://github.com/tommyo/wizarding/issues)

@@ -60,7 +60,7 @@ const toggleFollowups = (e: InputEvent) => {
   } else {
     i.value = 0;
   }
-}
+};
 
 
 const next = () => {
@@ -184,16 +184,21 @@ const next = () => {
           <!-- Text Input -->
           <template v-else-if="currentQuestion.type === 'text'">
             <div class="input-text">
-              <textarea v-model="answers[i] as string" :placeholder="currentQuestion.helpText" rows="4"
-                class="text-input"></textarea>
+              <textarea v-model="answers[i] as string"
+                        :placeholder="currentQuestion.helpText"
+                        rows="4"
+                        class="text-input"></textarea>
             </div>
           </template>
 
           <!-- Number Input -->
           <template v-else-if="currentQuestion.type === 'number'">
             <div class="input-number">
-              <input type="number" v-model="answers[i]" :min="currentQuestion.validation?.min"
-                :max="currentQuestion.validation?.max" class="number-input" />
+              <input type="number"
+                     v-model="answers[i]"
+                     :min="currentQuestion.validation?.min"
+                     :max="currentQuestion.validation?.max"
+                     class="number-input" />
             </div>
           </template>
 
@@ -203,14 +208,20 @@ const next = () => {
               <div class="range-inputs">
                 <div class="range-input-group">
                   <label>Minimum</label>
-                  <input type="number" v-model="(answers[i] as NumberRange).min" :min="currentQuestion.validation?.min"
-                    :max="currentQuestion.validation?.max" class="number-input" />
+                  <input type="number"
+                         v-model="(answers[i] as NumberRange).min"
+                         :min="currentQuestion.validation?.min"
+                         :max="currentQuestion.validation?.max"
+                         class="number-input" />
                 </div>
                 <div class="range-separator">-</div>
                 <div class="range-input-group">
                   <label>Maximum</label>
-                  <input type="number" v-model="(answers[i] as NumberRange).min" :min="currentQuestion.validation?.min"
-                    :max="currentQuestion.validation?.max" class="number-input" />
+                  <input type="number"
+                         v-model="(answers[i] as NumberRange).min"
+                         :min="currentQuestion.validation?.min"
+                         :max="currentQuestion.validation?.max"
+                         class="number-input" />
                 </div>
               </div>
             </div>
@@ -258,7 +269,10 @@ const next = () => {
           Skip
         </button>
 
-        <button v-else :disabled="isRequired && !isAnswered" @click="next()" class="next">
+        <button v-else
+                :disabled="isRequired && !isAnswered"
+                @click="next()"
+                class="next">
           {{ canGoNext ? 'Next' : 'Finish' }}
         </button>
       </div>

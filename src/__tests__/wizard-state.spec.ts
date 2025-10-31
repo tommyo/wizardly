@@ -1,5 +1,6 @@
 // wizard-state.spec.ts - Tests for wizard state management functions
 import { describe, it, expect, beforeEach } from 'vitest';
+import type { WizardState, Question } from '../types';
 import {
   getQuestionSet,
   getCurrentAnswers,
@@ -11,7 +12,6 @@ import {
   getAnswers,
   getAnswersObject,
 } from '../wizard-state';
-import type { WizardState, Question } from '../types';
 
 describe('Wizard State', () => {
   let state: WizardState;
@@ -433,15 +433,15 @@ describe('Wizard State', () => {
       expect(answers.length).toBe(3);
       expect(answers).toContainEqual({
         questionId: 'range',
-        value: { min: 10, max: 20 }
+        value: { min: 10, max: 20 },
       });
       expect(answers).toContainEqual({
         questionId: 'dateRange',
-        value: { start: '2024-01-01', end: '2024-12-31' }
+        value: { start: '2024-01-01', end: '2024-12-31' },
       });
       expect(answers).toContainEqual({
         questionId: 'choices',
-        value: ['option1', 'option2']
+        value: ['option1', 'option2'],
       });
     });
   });

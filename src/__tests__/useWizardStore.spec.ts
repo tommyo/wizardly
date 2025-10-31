@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
+import { describe, it, expect, beforeEach } from 'vitest';
 import useWizardStore from '../composables/useWizardStore';
 import type { WizardConfig, Question } from '../types';
 
