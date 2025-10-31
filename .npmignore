@@ -1,0 +1,51 @@
+# Source files
+src/
+!src/index.ts
+
+# Tests
+**/__tests__/
+**/*.spec.ts
+**/*.test.ts
+e2e/
+playwright.config.ts
+vitest.config.ts
+
+# Development files
+.vscode/
+.editorconfig
+.gitattributes
+.gitignore
+*.log
+*.tsbuildinfo
+
+# Build configuration
+vite.config.ts
+tsconfig*.json
+eslint.config.ts
+
+# Documentation (keep README.md)
+REFACTORING_PLAN.md
+RESEARCH.md
+TYPE_SAFETY_GUIDE.md
+TYPE_SAFETY_IMPLEMENTATION.md
+
+# Development dependencies
+node_modules/
+.npm/
+.cache/
+
+# Demo/Example files
+src/views/
+src/router/
+src/stores/counter.ts
+src/App.vue
+src/main.ts
+index.html
+public/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store

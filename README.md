@@ -58,7 +58,14 @@ src/
 
 ## Quick Start
 
-### 1. Create a JSON Configuration
+### 1. Import the Library
+
+```typescript
+import { useWizard, WizardComponent } from 'wizardly';
+import type { Question } from 'wizardly';
+```
+
+### 2. Create a JSON Configuration
 
 ```json
 {

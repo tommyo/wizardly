@@ -1,27 +1,72 @@
 {
   "name": "wizardly",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "A flexible, type-safe wizard/questionnaire component for Vue 3",
   "type": "module",
+  "main": "./dist/wizardly.umd.cjs",
+  "module": "./dist/wizardly.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/wizardly.js",
+      "require": "./dist/wizardly.umd.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "vue",
+    "vue3",
+    "wizard",
+    "questionnaire",
+    "form",
+    "survey",
+    "typescript",
+    "composable",
+    "pinia"
+  ],
+  "author": "TommyO <tomm@huffduff.net>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tommyo/wizardly.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tommyo/wizardly/issues"
+  },
+  "homepage": "https://github.com/tommyo/wizardly#readme",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
     "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
+    "build": "run-p type-check build:lib",
+    "build:lib": "vite build",
     "preview": "vite preview",
     "test:unit": "vitest",
     "test:e2e": "playwright test",
-    "build-only": "vite build",
-    "type-check": "vue-tsc --build",
+    "type-check": "vue-tsc --build --force",
     "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix --cache",
-    "lint": "run-s lint:*"
+    "lint": "run-s lint:*",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0",
+    "pinia": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pinia": {
+      "optional": true
+    }
   },
   "dependencies": {
-    "@vueuse/core": "^14.0.0",
-    "vue": "^3.5.22",
-    "vue-router": "^4.6.3"
+    "@vueuse/core": "^14.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
@@ -44,11 +89,9 @@
     "pinia": "^3.0.3",
     "typescript": "~5.9.0",
     "vite": "npm:rolldown-vite@latest",
+    "vite-plugin-dts": "^4.3.0",
     "vite-plugin-vue-devtools": "^8.0.3",
     "vitest": "^3.2.4",
     "vue-tsc": "^3.1.1"
-  },
-  "peerDependencies": {
-    "pinia": "^3.0.3"
   }
 }
