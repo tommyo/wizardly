@@ -43,10 +43,10 @@ watchEffect(() => {
 });
 
 const saveAnswers = () => {
-  const all = currentQuestions.value
-    .map((q, i) => ({ questionId: q.id, value: answers.value[i] } as Answer))
-    .filter((a) => a.value !== undefined && a.value !== null);
-  wizard.answerQuestions(all);
+  const results = wizard.answerQuestions(currentQuestions.value, answers.value);
+
+  // Check if all validations passed
+  return results.every(r => r.isValid);
 };
 
 const isRequired = computed(() => currentQuestion.value?.required);
@@ -71,11 +71,17 @@ const next = () => {
       return;
     }
   }
-  i.value = 0;
-  saveAnswers();
-  answers.value = [];
 
-  console.log({ wizard });
+  // Save answers and check if validation passed
+  const isValid = saveAnswers();
+
+  if (!isValid) {
+    // Don't proceed if validation failed
+    return;
+  }
+
+  i.value = 0;
+  answers.value = [];
 
   if (isComplete) {
     const result = wizard.complete();
@@ -233,6 +239,11 @@ const next = () => {
               </div>
             </div>
           </template>
+
+          <!-- Validation Error Display -->
+          <div v-if="wizard.getValidationError(currentQuestion.id)" class="validation-error">
+            {{ wizard.getValidationError(currentQuestion.id) }}
+          </div>
         </template>
       </div>
 

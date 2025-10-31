@@ -6,7 +6,9 @@ import type {
   AnswerValue,
   Condition,
   Answer,
+  ValidationResult,
 } from './types';
+import { validateAnswer } from './validators';
 
 export class WizardEngine {
   private questions: Question[];
@@ -85,25 +87,34 @@ export class WizardEngine {
 
   /**
  * Answer the current question with type-safe validation.
- * Validates and stores the answer, then rebuilds the question list to handle conditionals.
- *
- * @example
- * const question = engine.getCurrentQuestion();
- * if (question && question.type === 'number') {
- *   const result = engine.answerCurrentQuestion(
- *     question as Question<'number'>,
- *     42
- *   );
- * }
+ * stores the answer, then rebuilds the question list to handle conditionals.
+ * optionally validates too, useful for loading in stored answers.
  */
   answerQuestions(
     state: WizardState,
     answers: Answer[],
-  ): void {
+    validate = true,
+  ): ValidationResult[] {
     const added: [string, AnswerValue][] = [];
+    const validationResults: ValidationResult[] = [];
 
+    // Validate each answer before storing
     answers.forEach((answer) => {
-      added.push([answer.questionId, answer.value]);
+      const question = this.findQuestionById(answer.questionId);
+      let isValid = !validate;
+      if (question) {
+        if (validate) {
+
+          const result = validateAnswer(question, answer.value);
+          validationResults.push(result);
+          isValid = result.isValid;
+        }
+
+        // Only store valid answers
+        if (isValid) {
+          added.push([answer.questionId, answer.value]);
+        }
+      }
     });
 
     // Store the answers - create new Map from existing entries plus new ones
@@ -112,6 +123,27 @@ export class WizardEngine {
 
     // Rebuild questions list (handles conditional logic)
     this.rebuildQuestionsList(state);
+
+    return validationResults;
+  }
+
+  /**
+   * Find a question by its ID in the original questions list
+   */
+  private findQuestionById(id: string): Question | undefined {
+    const findInQuestions = (questions: Question[]): Question | undefined => {
+      for (const q of questions) {
+        if (q.id === id) return q;
+        if (q.conditionalQuestions) {
+          for (const cq of q.conditionalQuestions) {
+            const found = findInQuestions([cq.question]);
+            if (found) return found;
+          }
+        }
+      }
+      return undefined;
+    };
+    return findInQuestions(this.questions);
   }
 }
 

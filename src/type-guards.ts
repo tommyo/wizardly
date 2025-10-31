@@ -1,6 +1,6 @@
 // type-guards.ts - Runtime type validation for wizard answer values
 
-import type { NumberRange, DateRange, Answer, QuestionType } from './types';
+import type { NumberRange, DateRange, Answer, QuestionType, AnswerValueMap } from './types';
 
 /**
  * Type guard for text answers
@@ -51,7 +51,32 @@ export function isNumberRangeAnswer(value: unknown): value is NumberRange {
 export function isDateAnswer(value: unknown): value is string {
   if (typeof value !== 'string') return false;
   const date = new Date(value);
-  return !isNaN(date.getTime());
+
+  if (isNaN(date.getTime())) return false;
+
+  // For ISO format dates, verify the date wasn't adjusted (e.g., Feb 30 -> Mar 2)
+  if (value.match(/^\d{4}-\d{2}-\d{2}/)) {
+    const datePart = value.split('T')[0];
+    if (!datePart) return false;
+
+    const parts = datePart.split('-');
+    if (parts.length !== 3) return false;
+
+    const year = parseInt(parts[0]!, 10);
+    const month = parseInt(parts[1]!, 10);
+    const day = parseInt(parts[2]!, 10);
+
+    if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+
+    // Verify the date wasn't adjusted
+    if (date.getUTCFullYear() !== year ||
+      date.getUTCMonth() + 1 !== month ||
+      date.getUTCDate() !== day) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /**
@@ -82,7 +107,7 @@ export function isDateRangeAnswer(value: unknown): value is DateRange {
  */
 export function createAnswerTypeGuard<T extends QuestionType>(
   type: T
-): (value: unknown) => value is Answer<T> {
+): (value: unknown) => value is AnswerValueMap[T] {
   const guards: Record<QuestionType, (value: unknown) => boolean> = {
     'text': isTextAnswer,
     'boolean': isBooleanAnswer,
@@ -93,7 +118,7 @@ export function createAnswerTypeGuard<T extends QuestionType>(
     'date-range': isDateRangeAnswer,
   };
 
-  return guards[type] as (value: unknown) => value is Answer<T>;
+  return guards[type] as (value: unknown) => value is AnswerValueMap[T];
 }
 
 /**

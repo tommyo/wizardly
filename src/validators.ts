@@ -11,7 +11,7 @@ import type { AnswerValueMap, DateRange, NumberRange, Question, QuestionType, Va
  */
 export function validateAnswer<T extends QuestionType>(
   question: Question<T>,
-  answer: AnswerValueMap[T]
+  answer: AnswerValueMap[T] | null | undefined
 ): ValidationResult {
   // Check if required
   if (question.required && (answer === null || answer === undefined || answer === '')) {
@@ -27,10 +27,7 @@ export function validateAnswer<T extends QuestionType>(
   }
 
   // Type-specific validation
-  const validation = question.validation;
-  if (!validation) {
-    return { isValid: true };
-  }
+  const validation = question.validation || {};
 
   switch (question.type) {
     case 'text':
@@ -100,7 +97,7 @@ function validateNumber(value: number, validation: Validation): ValidationResult
 }
 
 function validateNumberRange(value: NumberRange, validation: Validation): ValidationResult {
-  if (!value.min || !value.max) {
+  if (value.min === null || value.min === undefined || value.max === null || value.max === undefined) {
     return {
       isValid: false,
       error: new Error('Both minimum and maximum values are required'),
@@ -141,11 +138,67 @@ function validateDate(value: string, validation: Validation): ValidationResult {
     };
   }
 
+  // Additional validation: check if the date string round-trips correctly
+  // This catches cases like '2024-02-30' which JavaScript converts to '2024-03-01'
+  const isoString = date.toISOString();
+  const inputDate = new Date(value);
+  inputDate.setHours(0, 0, 0, 0);
+  const parsedDate = new Date(isoString);
+  parsedDate.setHours(0, 0, 0, 0);
+
+  // For ISO format dates, verify the input matches expected format
+  if (value.match(/^\d{4}-\d{2}-\d{2}/)) {
+    const datePart = value.split('T')[0];
+    if (!datePart) {
+      return {
+        isValid: false,
+        error: new Error('Invalid date'),
+      };
+    }
+    const parts = datePart.split('-');
+    if (parts.length !== 3) {
+      return {
+        isValid: false,
+        error: new Error('Invalid date'),
+      };
+    }
+    const year = parseInt(parts[0]!, 10);
+    const month = parseInt(parts[1]!, 10);
+    const day = parseInt(parts[2]!, 10);
+
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+      return {
+        isValid: false,
+        error: new Error('Invalid date'),
+      };
+    }
+
+    // Verify the date wasn't adjusted (e.g., Feb 30 -> Mar 2)
+    if (date.getUTCFullYear() !== year ||
+      date.getUTCMonth() + 1 !== month ||
+      date.getUTCDate() !== day) {
+      return {
+        isValid: false,
+        error: new Error('Invalid date'),
+      };
+    }
+  }
+
   if (validation.minDate) {
-    const minDate = validation.minDate === 'today' ? new Date() : new Date(validation.minDate);
-    minDate.setHours(0, 0, 0, 0);
-    const checkDate = new Date(date);
-    checkDate.setHours(0, 0, 0, 0);
+    // Normalize both dates to UTC midnight for comparison
+    let minDate: number;
+    if (validation.minDate === 'today') {
+      const today = new Date();
+      minDate = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+    } else {
+      const minDateObj = new Date(validation.minDate);
+      minDate = Date.UTC(minDateObj.getUTCFullYear(), minDateObj.getUTCMonth(), minDateObj.getUTCDate());
+    }
+
+    const checkYear = date.getUTCFullYear();
+    const checkMonth = date.getUTCMonth();
+    const checkDay = date.getUTCDate();
+    const checkDate = Date.UTC(checkYear, checkMonth, checkDay);
 
     if (checkDate < minDate) {
       return {
@@ -156,10 +209,20 @@ function validateDate(value: string, validation: Validation): ValidationResult {
   }
 
   if (validation.maxDate) {
-    const maxDate = validation.maxDate === 'today' ? new Date() : new Date(validation.maxDate);
-    maxDate.setHours(0, 0, 0, 0);
-    const checkDate = new Date(date);
-    checkDate.setHours(0, 0, 0, 0);
+    // Normalize both dates to UTC midnight for comparison
+    let maxDate: number;
+    if (validation.maxDate === 'today') {
+      const today = new Date();
+      maxDate = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+    } else {
+      const maxDateObj = new Date(validation.maxDate);
+      maxDate = Date.UTC(maxDateObj.getUTCFullYear(), maxDateObj.getUTCMonth(), maxDateObj.getUTCDate());
+    }
+
+    const checkYear = date.getUTCFullYear();
+    const checkMonth = date.getUTCMonth();
+    const checkDay = date.getUTCDate();
+    const checkDate = Date.UTC(checkYear, checkMonth, checkDay);
 
     if (checkDate > maxDate) {
       return {
@@ -173,7 +236,7 @@ function validateDate(value: string, validation: Validation): ValidationResult {
 }
 
 function validateDateRange(value: DateRange, validation: Validation): ValidationResult {
-  if (!value.start || !value.end) {
+  if (!value.start || !value.end || value.start === '' || value.end === '') {
     return {
       isValid: false,
       error: new Error('Both start and end dates are required'),

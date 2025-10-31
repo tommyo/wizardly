@@ -1,9 +1,10 @@
 // useWizard.ts - Vue 3 Composable for wizard management
 
-import { computed, reactive, watch, watchEffect } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { WizardEngine } from '../wizard-engine';
 import * as wizard from '../wizard-state';
-import type { Question, Answer } from '../types';
+import type { Question, Answer, ValidationResult, AnswerValue } from '../types';
+import { validateAnswer } from '@/validators';
 export function useWizard(questions: Question[], answers?: Answer[]) {
 
   const engine = new WizardEngine(questions);
@@ -11,9 +12,8 @@ export function useWizard(questions: Question[], answers?: Answer[]) {
   // Create the wizard state
   const state = reactive(engine.initState(answers));
 
-  watch(() => [state.flattenedQuestions, state.answers], ([questions, answers]) => {
-    console.log({ questions, answers });
-  });
+  // Track validation errors
+  const validationErrors = ref<Map<string, string>>(new Map());
 
   const currentQuestions = computed(() => wizard.getQuestionSet(state));
 
@@ -38,10 +38,37 @@ export function useWizard(questions: Question[], answers?: Answer[]) {
 
   /**
    * Submit the current answers and move on.
+   * Returns validation results for each answer.
    */
-  const answerQuestions = (answers: Answer[]): void => {
-    engine.answerQuestions(state, answers);
-    wizard.next(state);
+  const answerQuestions = (questions: Question[], answers: (AnswerValue | undefined)[]): ValidationResult[] => {
+    // Clear previous errors
+    validationErrors.value.clear();
+
+    const toSubmit: Answer[] = [];
+    const validationResults: ValidationResult[] = [];
+
+    let allValid = true;
+    questions.forEach((q, i) => {
+      const a = answers[i];
+      validationResults[i] = validateAnswer(q, a);
+      if (!validationResults[i].isValid) {
+        allValid = false;
+        if (validationResults[i].error) {
+          validationErrors.value.set(q.id, validationResults[i].error.message);
+        }
+        return;
+      }
+      if (a !== undefined) {
+        toSubmit.push({ questionId: q.id, value: a });
+      }
+    });
+
+    if (allValid) {
+      engine.answerQuestions(state, toSubmit, false);
+      wizard.next(state);
+    }
+
+    return validationResults;
   };
 
   /**
@@ -85,11 +112,26 @@ export function useWizard(questions: Question[], answers?: Answer[]) {
     };
   };
 
+  /**
+   * Get validation error for a specific question
+   */
+  const getValidationError = (questionId: string): string | undefined => {
+    return validationErrors.value.get(questionId);
+  };
+
+  /**
+   * Clear validation errors
+   */
+  const clearValidationErrors = (): void => {
+    validationErrors.value.clear();
+  };
+
   return {
     // State
     currentQuestions,
     currentAnswers,
     isComplete,
+    validationErrors: computed(() => validationErrors.value),
 
     // Computed
     progress,
@@ -104,5 +146,7 @@ export function useWizard(questions: Question[], answers?: Answer[]) {
     getAnswersObject,
     reset,
     complete,
+    getValidationError,
+    clearValidationErrors,
   };
 }
