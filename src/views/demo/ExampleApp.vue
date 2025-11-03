@@ -34,9 +34,10 @@ const inlineConfig: WizardConfig = {
     },
     {
       id: 'interests',
-      type: 'text',
+      type: 'multiple-choice',
       question: 'What are you interested in doing?',
       required: false,
+      allowMultiple: true,
       options: [
         {
           label: 'going out to eat',
@@ -51,19 +52,31 @@ const inlineConfig: WizardConfig = {
       ],
     },
     {
-      id: 'newsletter',
+      id: 'sports',
       type: 'boolean',
-      question: 'Would you like to receive our newsletter?',
+      question: 'Are sports important to you?',
       required: false,
-      default: true,
+      default: false,
       conditionalQuestions: [
         {
           condition: { operator: 'equals', value: true },
           question: {
-            id: 'email',
-            type: 'text',
-            question: 'what email should we send it to?',
-            required: true,
+            id: 'sports-sub',
+            type: 'boolean',
+            question: 'would you like to receive our sports based newsletter?',
+            required: false,
+            default: false,
+            conditionalQuestions: [
+              {
+                condition: { operator: 'equals', value: true },
+                question: {
+                  id: 'email',
+                  type: 'text',
+                  question: 'what email should we send it to?',
+                  required: true,
+                },
+              },
+            ],
           },
         },
       ],

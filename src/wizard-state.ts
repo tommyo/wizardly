@@ -6,6 +6,35 @@ import type {
   WizardState,
 } from './types';
 
+function findPrevIndex(state: WizardState) {
+  if (state.currentQuestionIndex < 1) {
+    return null;
+  }
+  let i = state.currentQuestionIndex;
+  while (i > 0) {
+    i--;
+    if (!state.flattenedQuestions[i]?.conditionalParent) {
+      return i;
+    }
+  }
+  return null;
+}
+
+function findNextIndex(state: WizardState) {
+  const last = state.flattenedQuestions.length - 1;
+  if (state.currentQuestionIndex >= last) {
+    return null;
+  }
+  let i = state.currentQuestionIndex;
+  while (i < last) {
+    i++;
+    if (!state.flattenedQuestions[i]?.conditionalParent) {
+      return i;
+    }
+  }
+  return null;
+}
+
 /**
  * Get the current question
  */
@@ -23,13 +52,14 @@ export function getQuestionSet(state: WizardState, startIndex = -1): Question[] 
 
   const out: Question[] = [firstQuestion];
   i++; // Move to next question
-
+  const parentIds: string[] = [firstQuestion.id];
   while (i < state.flattenedQuestions.length) {
     const next = state.flattenedQuestions[i];
-    if (!next || next.conditionalParent !== firstQuestion.id) {
+    if (!next || !next.conditionalParent || !parentIds.includes(next.conditionalParent)) {
       break;
     }
     out.push(next);
+    parentIds.push(next.id);
     i++;
   }
   return out;
@@ -59,49 +89,51 @@ export function getCurrentAnswers(
  * Move to the next question
  */
 export function next(state: WizardState): boolean {
-  if (canGoNext(state)) {
-    state.currentQuestionIndex++;
-
-    // Check if wizard is complete
-    if (state.currentQuestionIndex >= state.flattenedQuestions.length) {
-      state.isComplete = true;
-    }
-
-    const isNow = state.flattenedQuestions[state.currentQuestionIndex];
-    if (isNow && !state.visitedQuestions.includes(isNow.id)) {
-      state.visitedQuestions.push(isNow.id);
-    }
-
-    return true;
+  const newIndex = findNextIndex(state);
+  if (newIndex === null) {
+    return false;
   }
-  return false;
+
+  // Check if wizard is complete
+  if (newIndex >= state.flattenedQuestions.length) {
+    state.isComplete = true;
+  }
+
+  const isNow = state.flattenedQuestions[newIndex];
+  if (isNow && !state.visitedQuestions.includes(isNow.id)) {
+    state.visitedQuestions.push(isNow.id);
+  }
+
+  state.currentQuestionIndex = newIndex;
+  return true;
 }
 
 /**
  * Move to the previous question
  */
 export function previous(state: WizardState): boolean {
-  if (canGoPrevious(state)) {
-    state.currentQuestionIndex--;
-    return true;
+  const newIndex = findPrevIndex(state);
+  if (newIndex === null) {
+    return false;
   }
+  state.currentQuestionIndex = newIndex;
   return false;
 }
 
 /**
  * Check if we can go to the next question
- * accepts a count to account for the number of questions in a question set
  */
-export function canGoNext(state: WizardState, count = 1): boolean {
-
-  return state.currentQuestionIndex + count <= state.flattenedQuestions.length;
+export function canGoNext(state: WizardState): boolean {
+  const next = findNextIndex(state);
+  return next !== null;
 }
 
 /**
  * Check if we can go to the previous question
  */
 export function canGoPrevious(state: WizardState): boolean {
-  return state.currentQuestionIndex > 0;
+  const prev = findPrevIndex(state);
+  return prev !== null;
 }
 
 /**

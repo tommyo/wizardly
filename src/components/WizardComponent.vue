@@ -3,6 +3,9 @@ import { computed, ref, watchEffect } from 'vue';
 import { useWizard } from '../composables/useWizard';
 import type { Question, Answer, AnswerValue, NumberRange, DateRange } from '../types';
 
+// Extended Question type with conditionalParent (added by engine)
+type FlattenedQuestion = Question & { conditionalParent?: string };
+
 // Props
 const { questions } = defineProps<{
   // configUrl: string;
@@ -27,10 +30,6 @@ const {
   canGoNext,
 } = wizard;
 
-const i = ref(0);
-const firstQuestion = computed(() => currentQuestions.value[0]);
-const currentQuestion = computed(() => currentQuestions.value[i.value]);
-
 const answers = ref<(AnswerValue | undefined)[]>([]);
 watchEffect(() => {
   answers.value = currentQuestions.value.map((q, i) => {
@@ -49,29 +48,40 @@ const saveAnswers = () => {
   return results.every(r => r.isValid);
 };
 
-const isRequired = computed(() => currentQuestion.value?.required);
-const isAnswered = computed(() => answers.value[i.value] !== undefined);
+// Get visible questions based on boolean toggle states
+const visibleQuestions = computed(() => {
+  const visible: Array<{ question: Question; index: number }> = [];
 
-const hasFollowups = computed(() => currentQuestions.value.length > 1);
-const toggleFollowups = (e: InputEvent) => {
-  answers.value[0] = (e.target as HTMLInputElement).checked;
-  if (answers.value[0] === true) {
-    i.value++;
-  } else {
-    i.value = 0;
-  }
-};
+  currentQuestions.value.forEach((q, index) => {
+    const fq = q as FlattenedQuestion;
 
-
-const next = () => {
-  if (i.value < currentQuestions.value.length - 1) {
-    // we actually only want to show more if we answered the parent question positively
-    if (answers.value[0] === true) {
-      i.value++;
+    // Always show questions without a parent
+    if (!fq.conditionalParent) {
+      visible.push({ question: q, index });
       return;
     }
-  }
 
+    // For questions with a parent, check if parent is answered true
+    const parentIndex = currentQuestions.value.findIndex(pq => pq.id === fq.conditionalParent);
+    if (parentIndex >= 0 && answers.value[parentIndex] === true) {
+      visible.push({ question: q, index });
+    }
+  });
+
+  return visible;
+});
+
+
+const isRequired = computed(() => {
+  return visibleQuestions.value.some(vq => vq.question.required);
+});
+
+
+const isRequiredAnswered = computed(() => {
+  return visibleQuestions.value.some(vq => vq.question.required && answers.value[vq.index] !== undefined);
+});
+
+const next = () => {
   // Save answers and check if validation passed
   const isValid = saveAnswers();
 
@@ -80,7 +90,6 @@ const next = () => {
     return;
   }
 
-  i.value = 0;
   answers.value = [];
 
   if (isComplete) {
@@ -104,160 +113,131 @@ const next = () => {
           Question {{ progress.current }} of {{ progress.total }}
         </p>
       </div>
-      <div class="question">
-        <!--
-        If the first question is a boolean, then toggling it on activates the child questions.
-        It should persist so it can be toggled off, unlike in other situations.
-        example:
-          "Is sports important to you? (boolean)"
-          "What are your favorite sports? (multiple-choice)"
-        -->
-        <template v-if="firstQuestion && hasFollowups">
-          <h2 class="question-text">
-            {{ firstQuestion.question }}
-            <span v-if="firstQuestion.required" class="required-indicator">*</span>
-          </h2>
 
-          <p v-if="firstQuestion.helpText" class="help-text">
-            {{ firstQuestion.helpText }}
-          </p>
+      <!-- Render all visible questions -->
+      <div v-for="{ question, index } in visibleQuestions" :key="question.id" class="question">
+        <h2 class="question-text">
+          {{ question.question }}
+          <span v-if="question.required" class="required-indicator">*</span>
+        </h2>
 
-          <!-- Boolean (Toggle Switch) -->
+        <p v-if="question.helpText" class="help-text">
+          {{ question.helpText }}
+        </p>
+
+        <!-- Boolean (Toggle Switch) -->
+        <template v-if="question.type === 'boolean'">
           <div class="input-boolean">
             <label class="toggle-switch">
-              <input type="checkbox" :value="answers[0]" @input="toggleFollowups" />
+              <input type="checkbox" v-model="answers[index]" />
               <span class="toggle-slider"></span>
               <span class="toggle-label">
-                {{ answers[0] ? 'Yes' : 'No' }}
+                {{ answers[index] ? 'Yes' : 'No' }}
               </span>
             </label>
           </div>
         </template>
-        <template v-if="currentQuestion">
-          <template v-if="!hasFollowups || i > 0">
 
-            <h2 class="question-text">
-              {{ currentQuestion.question }}
-              <span v-if="currentQuestion.required" class="required-indicator">*</span>
-            </h2>
-
-            <p v-if="currentQuestion.helpText" class="help-text">
-              {{ currentQuestion.helpText }}
-            </p>
-          </template>
-
-          <!-- Boolean - but only if it's a follow-up -->
-          <template v-if="currentQuestion.type == 'boolean' && (!hasFollowups || i > 0)">
-            <!-- Boolean (Toggle Switch) -->
-            <div class="input-boolean">
-              <label class="toggle-switch">
-                <input type="checkbox" v-model="answers[i]" />
-                <span class="toggle-slider"></span>
-                <span class="toggle-label">
-                  {{ answers[i] ? 'Yes' : 'No' }}
-                </span>
+        <!-- Multiple Choice -->
+        <template v-else-if="question.type === 'multiple-choice'">
+          <div class="input-multiple-choice">
+            <!-- Single Select -->
+            <div v-if="!question.allowMultiple" class="radio-group">
+              <label v-for="option in question.options" :key="option.value" class="radio-option">
+                <input type="radio" v-model="answers[index]" :value="option.value" />
+                <span>{{ option.label }}</span>
               </label>
             </div>
-          </template>
 
-          <!-- Multiple Choice -->
-          <template v-else-if="currentQuestion.type === 'multiple-choice'">
-            <div class="input-multiple-choice">
-              <!-- Single Select -->
-              <div v-if="!currentQuestion.allowMultiple" class="radio-group">
-                <label v-for="option in currentQuestion.options" :key="option.value" class="radio-option">
-                  <input type="radio" v-model="answers[i]" />
-                  <span>{{ option.label }}</span>
-                </label>
-              </div>
-
-              <!-- Multiple Select -->
-              <div v-else class="checkbox-group">
-                <label v-for="option in currentQuestion.options" :key="option.value" class="checkbox-option">
-                  <input type="checkbox" v-model="answers[i]" />
-                  <span>{{ option.label }}</span>
-                </label>
-              </div>
+            <!-- Multiple Select -->
+            <div v-else class="checkbox-group">
+              <label v-for="option in question.options" :key="option.value" class="checkbox-option">
+                <input type="checkbox" v-model="answers[index]" :value="option.value" />
+                <span>{{ option.label }}</span>
+              </label>
             </div>
-          </template>
-
-          <!-- Text Input -->
-          <template v-else-if="currentQuestion.type === 'text'">
-            <div class="input-text">
-              <textarea v-model="answers[i] as string"
-                        :placeholder="currentQuestion.helpText"
-                        rows="4"
-                        class="text-input"></textarea>
-            </div>
-          </template>
-
-          <!-- Number Input -->
-          <template v-else-if="currentQuestion.type === 'number'">
-            <div class="input-number">
-              <input type="number"
-                     v-model="answers[i]"
-                     :min="currentQuestion.validation?.min"
-                     :max="currentQuestion.validation?.max"
-                     class="number-input" />
-            </div>
-          </template>
-
-          <!-- Number Range -->
-          <template v-else-if="currentQuestion.type === 'number-range'">
-            <div class="input-number-range">
-              <div class="range-inputs">
-                <div class="range-input-group">
-                  <label>Minimum</label>
-                  <input type="number"
-                         v-model="(answers[i] as NumberRange).min"
-                         :min="currentQuestion.validation?.min"
-                         :max="currentQuestion.validation?.max"
-                         class="number-input" />
-                </div>
-                <div class="range-separator">-</div>
-                <div class="range-input-group">
-                  <label>Maximum</label>
-                  <input type="number"
-                         v-model="(answers[i] as NumberRange).min"
-                         :min="currentQuestion.validation?.min"
-                         :max="currentQuestion.validation?.max"
-                         class="number-input" />
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <!-- Date Input -->
-          <template v-else-if="currentQuestion.type === 'date'">
-            <div class="input-date">
-              <input type="date" v-model="answers[i]" class="date-input" />
-            </div>
-          </template>
-
-          <!-- Date Range -->
-          <template v-else-if="currentQuestion.type === 'date-range'">
-            <div class="input-date-range">
-              <div class="range-inputs">
-                <div class="range-input-group">
-                  <label>Start Date</label>
-                  <input type="date" v-model="(answers[i] as DateRange).start" class="date-input" />
-                </div>
-                <div class="range-separator">to</div>
-                <div class="range-input-group">
-                  <label>End Date</label>
-                  <input type="date" v-model="(answers[i] as DateRange).end" class="date-input" />
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <!-- Validation Error Display -->
-          <div v-if="wizard.getValidationError(currentQuestion.id)" class="validation-error">
-            {{ wizard.getValidationError(currentQuestion.id) }}
           </div>
         </template>
-      </div>
 
+        <!-- Text Input -->
+        <template v-else-if="question.type === 'text'">
+          <div class="input-text">
+            <textarea v-model="answers[index] as string"
+                      :placeholder="question.helpText"
+                      rows="4"
+                      class="text-input"></textarea>
+          </div>
+        </template>
+
+        <!-- Number Input -->
+        <template v-else-if="question.type === 'number'">
+          <div class="input-number">
+            <input type="number"
+                   v-model="answers[index]"
+                   :min="question.validation?.min"
+                   :max="question.validation?.max"
+                   class="number-input" />
+          </div>
+        </template>
+
+        <!-- Number Range -->
+        <template v-else-if="question.type === 'number-range'">
+          <div class="input-number-range">
+            <div class="range-inputs">
+              <div class="range-input-group">
+                <label>Minimum</label>
+                <input type="number"
+                       v-model="(answers[index] as NumberRange).min"
+                       :min="question.validation?.min"
+                       :max="question.validation?.max"
+                       class="number-input" />
+              </div>
+              <div class="range-separator">
+                -
+              </div>
+              <div class="range-input-group">
+                <label>Maximum</label>
+                <input type="number"
+                       v-model="(answers[index] as NumberRange).max"
+                       :min="question.validation?.min"
+                       :max="question.validation?.max"
+                       class="number-input" />
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Date Input -->
+        <template v-else-if="question.type === 'date'">
+          <div class="input-date">
+            <input type="date" v-model="answers[index]" class="date-input" />
+          </div>
+        </template>
+
+        <!-- Date Range -->
+        <template v-else-if="question.type === 'date-range'">
+          <div class="input-date-range">
+            <div class="range-inputs">
+              <div class="range-input-group">
+                <label>Start Date</label>
+                <input type="date" v-model="(answers[index] as DateRange).start" class="date-input" />
+              </div>
+              <div class="range-separator">
+                to
+              </div>
+              <div class="range-input-group">
+                <label>End Date</label>
+                <input type="date" v-model="(answers[index] as DateRange).end" class="date-input" />
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Validation Error Display -->
+        <div v-if="wizard.getValidationError(question.id)" class="validation-error">
+          {{ wizard.getValidationError(question.id) }}
+        </div>
+      </div>
 
       <!-- Navigation Buttons -->
       <div class="wizard-navigation">
@@ -265,12 +245,12 @@ const next = () => {
           Back
         </button>
 
-        <button v-if="!isRequired && !isAnswered" @click="wizard.skipQuestion()" class="next">
+        <button v-if="!isRequired" @click="wizard.skipQuestion()" class="next">
           Skip
         </button>
 
         <button v-else
-                :disabled="isRequired && !isAnswered"
+                :disabled="isRequired && !isRequiredAnswered"
                 @click="next()"
                 class="next">
           {{ canGoNext ? 'Next' : 'Finish' }}
@@ -317,6 +297,14 @@ const next = () => {
   border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.question {
+  margin-bottom: 1.5rem;
+}
+
+.question:last-of-type {
+  margin-bottom: 0;
 }
 
 .question-text {

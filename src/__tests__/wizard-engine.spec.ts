@@ -743,6 +743,232 @@ describe('WizardEngine', () => {
     });
   });
 
+  describe('Boolean Question Special Handling with Deep Nesting', () => {
+    it('should show deeply nested boolean conditional questions before answers', () => {
+      const questions: Question[] = [
+        {
+          id: 'q1',
+          type: 'boolean',
+          question: 'Is religion important to you?',
+          required: true,
+          conditionalQuestions: [
+            {
+              condition: { operator: 'equals', value: true },
+              question: {
+                id: 'q1a',
+                type: 'boolean',
+                question: 'Is it important that religion is important to your match?',
+                required: true,
+                conditionalQuestions: [
+                  {
+                    condition: { operator: 'equals', value: true },
+                    question: {
+                      id: 'q1a1',
+                      type: 'text',
+                      question: 'What religion?',
+                      required: true,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ];
+
+      const engine = new WizardEngine(questions);
+      const state = engine.initState();
+
+      // Before answering any questions, all boolean children should be visible
+      // q1 (boolean) -> q1a (boolean) -> q1a1 (text)
+      expect(state.flattenedQuestions.length).toBe(3);
+      expect(state.flattenedQuestions[0]!.id).toBe('q1');
+      expect(state.flattenedQuestions[1]!.id).toBe('q1a');
+      expect(state.flattenedQuestions[2]!.id).toBe('q1a1');
+
+      // Answer q1 = true (should keep all children visible)
+      engine.answerQuestions(state, [{ questionId: 'q1', value: true }]);
+      expect(state.flattenedQuestions.length).toBe(3);
+
+      // Answer q1a = true (should keep text question visible)
+      engine.answerQuestions(state, [{ questionId: 'q1a', value: true }]);
+      expect(state.flattenedQuestions.length).toBe(3);
+      expect(state.flattenedQuestions[2]!.id).toBe('q1a1');
+
+      // Answer q1a = false (should hide text question)
+      engine.answerQuestions(state, [{ questionId: 'q1a', value: false }]);
+      expect(state.flattenedQuestions.length).toBe(2);
+      expect(state.flattenedQuestions[0]!.id).toBe('q1');
+      expect(state.flattenedQuestions[1]!.id).toBe('q1a');
+
+      // Answer q1 = false (should hide all nested questions)
+      engine.answerQuestions(state, [{ questionId: 'q1', value: false }]);
+      expect(state.flattenedQuestions.length).toBe(1);
+      expect(state.flattenedQuestions[0]!.id).toBe('q1');
+    });
+
+    it('should handle mixed boolean and non-boolean nested questions', () => {
+      const questions: Question[] = [
+        {
+          id: 'has_pet',
+          type: 'boolean',
+          question: 'Do you have a pet?',
+          required: true,
+          conditionalQuestions: [
+            {
+              condition: { operator: 'equals', value: true },
+              question: {
+                id: 'pet_type',
+                type: 'text',
+                question: 'What type of pet?',
+                required: true,
+                conditionalQuestions: [
+                  {
+                    condition: { operator: 'equals', value: 'dog' },
+                    question: {
+                      id: 'has_training',
+                      type: 'boolean',
+                      question: 'Is your dog trained?',
+                      required: true,
+                      conditionalQuestions: [
+                        {
+                          condition: { operator: 'equals', value: true },
+                          question: {
+                            id: 'training_type',
+                            type: 'text',
+                            question: 'What type of training?',
+                            required: false,
+                          },
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ];
+
+      const engine = new WizardEngine(questions);
+      const state = engine.initState();
+
+      // Initially, only has_pet and pet_type should be visible (boolean shows children)
+      expect(state.flattenedQuestions.length).toBe(2);
+      expect(state.flattenedQuestions[0]!.id).toBe('has_pet');
+      expect(state.flattenedQuestions[1]!.id).toBe('pet_type');
+
+      // Answer has_pet = true (keeps pet_type visible)
+      engine.answerQuestions(state, [{ questionId: 'has_pet', value: true }]);
+      expect(state.flattenedQuestions.length).toBe(2);
+
+      // Answer pet_type = 'dog' (should show has_training and training_type)
+      engine.answerQuestions(state, [{ questionId: 'pet_type', value: 'dog' }]);
+      expect(state.flattenedQuestions.length).toBe(4);
+      expect(state.flattenedQuestions[2]!.id).toBe('has_training');
+      expect(state.flattenedQuestions[3]!.id).toBe('training_type');
+
+      // Answer has_training = true (keeps training_type visible)
+      engine.answerQuestions(state, [{ questionId: 'has_training', value: true }]);
+      expect(state.flattenedQuestions.length).toBe(4);
+
+      // Answer has_training = false (hides training_type)
+      engine.answerQuestions(state, [{ questionId: 'has_training', value: false }]);
+      expect(state.flattenedQuestions.length).toBe(3);
+      expect(state.flattenedQuestions[2]!.id).toBe('has_training');
+
+      // Change pet_type to 'cat' (should hide has_training branch)
+      engine.answerQuestions(state, [{ questionId: 'pet_type', value: 'cat' }]);
+      expect(state.flattenedQuestions.length).toBe(2);
+      expect(state.flattenedQuestions[0]!.id).toBe('has_pet');
+      expect(state.flattenedQuestions[1]!.id).toBe('pet_type');
+    });
+
+    it('should handle 4+ levels of nested boolean questions', () => {
+      const questions: Question[] = [
+        {
+          id: 'level1',
+          type: 'boolean',
+          question: 'Level 1?',
+          required: true,
+          conditionalQuestions: [
+            {
+              condition: { operator: 'equals', value: true },
+              question: {
+                id: 'level2',
+                type: 'boolean',
+                question: 'Level 2?',
+                required: true,
+                conditionalQuestions: [
+                  {
+                    condition: { operator: 'equals', value: true },
+                    question: {
+                      id: 'level3',
+                      type: 'boolean',
+                      question: 'Level 3?',
+                      required: true,
+                      conditionalQuestions: [
+                        {
+                          condition: { operator: 'equals', value: true },
+                          question: {
+                            id: 'level4',
+                            type: 'boolean',
+                            question: 'Level 4?',
+                            required: true,
+                            conditionalQuestions: [
+                              {
+                                condition: { operator: 'equals', value: true },
+                                question: {
+                                  id: 'level5',
+                                  type: 'text',
+                                  question: 'Level 5 text',
+                                  required: false,
+                                },
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ];
+
+      const engine = new WizardEngine(questions);
+      const state = engine.initState();
+
+      // All 5 levels should be visible initially (boolean special handling)
+      expect(state.flattenedQuestions.length).toBe(5);
+      expect(state.flattenedQuestions[0]!.id).toBe('level1');
+      expect(state.flattenedQuestions[1]!.id).toBe('level2');
+      expect(state.flattenedQuestions[2]!.id).toBe('level3');
+      expect(state.flattenedQuestions[3]!.id).toBe('level4');
+      expect(state.flattenedQuestions[4]!.id).toBe('level5');
+
+      // Toggle level3 to false (should hide level4 and level5)
+      engine.answerQuestions(state, [{ questionId: 'level3', value: false }]);
+      expect(state.flattenedQuestions.length).toBe(3);
+      expect(state.flattenedQuestions[2]!.id).toBe('level3');
+
+      // Toggle level3 back to true (should show level4 and level5 again)
+      engine.answerQuestions(state, [{ questionId: 'level3', value: true }]);
+      expect(state.flattenedQuestions.length).toBe(5);
+
+      // Toggle level1 to false (should hide all nested levels)
+      engine.answerQuestions(state, [{ questionId: 'level1', value: false }]);
+      expect(state.flattenedQuestions.length).toBe(1);
+      expect(state.flattenedQuestions[0]!.id).toBe('level1');
+
+      // Toggle level1 back to true (should restore all levels)
+      engine.answerQuestions(state, [{ questionId: 'level1', value: true }]);
+      expect(state.flattenedQuestions.length).toBe(5);
+    });
+  });
+
   describe('Add Questions', () => {
     it('should add new questions to existing wizard', () => {
       const initialQuestions: Question[] = [

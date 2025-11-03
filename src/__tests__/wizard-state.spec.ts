@@ -103,13 +103,106 @@ describe('Wizard State', () => {
         { id: 'parent', type: 'boolean', question: 'Parent?', required: true },
         { id: 'child', type: 'boolean', question: 'Child?', required: true, conditionalParent: 'parent' },
         { id: 'grandchild', type: 'text', question: 'Grandchild?', required: true, conditionalParent: 'child' },
+        { id: 'q2', type: 'text', question: 'next?' },
       ];
       state.currentQuestionIndex = 0;
 
       const questions = getQuestionSet(state);
-      expect(questions.length).toBe(2);
+      expect(questions.length).toBe(3);
       expect(questions[0]!.id).toBe('parent');
       expect(questions[1]!.id).toBe('child');
+      expect(questions[2]!.id).toBe('grandchild');
+    });
+
+    it('should handle deeply nested conditional children (3+ levels)', () => {
+      state.flattenedQuestions = [
+        { id: 'level1', type: 'boolean', question: 'Level 1?', required: true },
+        { id: 'level2', type: 'boolean', question: 'Level 2?', required: true, conditionalParent: 'level1' },
+        { id: 'level3', type: 'boolean', question: 'Level 3?', required: true, conditionalParent: 'level2' },
+        { id: 'level4', type: 'text', question: 'Level 4?', required: true, conditionalParent: 'level3' },
+        { id: 'next', type: 'text', question: 'Next?', required: true },
+      ];
+      state.currentQuestionIndex = 0;
+
+      // At level 1, should only get level1 and its immediate child level2
+      const questions = getQuestionSet(state);
+      expect(questions.length).toBe(4);
+      expect(questions[0]!.id).toBe('level1');
+      expect(questions[1]!.id).toBe('level2');
+      expect(questions[2]!.id).toBe('level3');
+      expect(questions[3]!.id).toBe('level4');
+
+      // At level 2, should get level2 and its immediate child level3
+      // const questionsLevel2 = getQuestionSet(state, 1);
+      // expect(questionsLevel2.length).toBe(2);
+      // expect(questionsLevel2[0]!.id).toBe('level2');
+      // expect(questionsLevel2[1]!.id).toBe('level3');
+
+      // At level 3, should get level3 and its immediate child level4
+      // const questionsLevel3 = getQuestionSet(state, 2);
+      // expect(questionsLevel3.length).toBe(2);
+      // expect(questionsLevel3[0]!.id).toBe('level3');
+      // expect(questionsLevel3[1]!.id).toBe('level4');
+    });
+
+    it('should handle special boolean conditions (show conditionals before parent answer)', () => {
+      // For boolean questions, conditionals should be shown in the same question set
+      // even before the parent is answered, allowing the user to see what will be asked
+      state.flattenedQuestions = [
+        { id: 'boolParent', type: 'boolean', question: 'Boolean Parent?', required: true },
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'boolParent' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'boolParent' },
+        { id: 'next', type: 'text', question: 'Next?', required: true },
+      ];
+      state.currentQuestionIndex = 0;
+
+      const questions = getQuestionSet(state);
+
+      // Should include parent and all immediate children for boolean type
+      expect(questions.length).toBe(3);
+      expect(questions[0]!.id).toBe('boolParent');
+      expect(questions[0]!.type).toBe('boolean');
+      expect(questions[1]!.id).toBe('child1');
+      expect(questions[2]!.id).toBe('child2');
+    });
+
+    it('should handle deeply nested special boolean conditions (3+ levels)', () => {
+      // Test that boolean special handling works at multiple nesting levels
+      state.flattenedQuestions = [
+        { id: 'bool1', type: 'boolean', question: 'Bool 1?', required: true },
+        { id: 'bool2', type: 'boolean', question: 'Bool 2?', required: true, conditionalParent: 'bool1' },
+        { id: 'bool3', type: 'boolean', question: 'Bool 3?', required: true, conditionalParent: 'bool2' },
+        { id: 'text1', type: 'text', question: 'Text 1?', required: true, conditionalParent: 'bool3' },
+        { id: 'text2', type: 'text', question: 'Text 2?', required: true, conditionalParent: 'bool3' },
+        { id: 'next', type: 'text', question: 'Next?', required: true },
+      ];
+      state.currentQuestionIndex = 0;
+
+      // At bool1, should get bool1 and its immediate child bool2
+      const questions = getQuestionSet(state);
+      expect(questions.length).toBe(5);
+      expect(questions[0]!.id).toBe('bool1');
+      expect(questions[0]!.type).toBe('boolean');
+      expect(questions[1]!.id).toBe('bool2');
+      expect(questions[1]!.type).toBe('boolean');
+      expect(questions[4]!.id).toBe('text2');
+      expect(questions[4]!.type).toBe('text');
+
+      // At bool2, should get bool2 and its immediate child bool3
+      // const questionsLevel2 = getQuestionSet(state, 1);
+      // expect(questionsLevel2.length).toBe(2);
+      // expect(questionsLevel2[0]!.id).toBe('bool2');
+      // expect(questionsLevel2[0]!.type).toBe('boolean');
+      // expect(questionsLevel2[1]!.id).toBe('bool3');
+      // expect(questionsLevel2[1]!.type).toBe('boolean');
+
+      // At bool3, should get bool3 and both its text children
+      // const questionsLevel3 = getQuestionSet(state, 2);
+      // expect(questionsLevel3.length).toBe(3);
+      // expect(questionsLevel3[0]!.id).toBe('bool3');
+      // expect(questionsLevel3[0]!.type).toBe('boolean');
+      // expect(questionsLevel3[1]!.id).toBe('text1');
+      // expect(questionsLevel3[2]!.id).toBe('text2');
     });
   });
 
@@ -281,16 +374,6 @@ describe('Wizard State', () => {
     it('should return false when past end', () => {
       state.currentQuestionIndex = 3;
       expect(canGoNext(state)).toBe(false);
-    });
-
-    it('should handle count parameter for question sets', () => {
-      state.currentQuestionIndex = 0;
-
-      // Can advance by 3 (to end)
-      expect(canGoNext(state, 3)).toBe(true);
-
-      // Cannot advance by 4 (past end)
-      expect(canGoNext(state, 4)).toBe(false);
     });
 
     it('should handle empty questions array', () => {

@@ -1,0 +1,147 @@
+{
+    "wizardId": "test-the-schema",
+    "title": "Testing the Schema",
+    "description": "Help us understand how this works",
+    "questions": [
+        {
+            "id": "q1",
+            "type": "boolean",
+            "question": "Is religion important to you?",
+            "required": false,
+            "default": false,
+            "conditionalQuestions": [
+                {
+                    "condition": {
+                        "operator": "equals",
+                        "value": true
+                    },
+                    "question": {
+                        "id": "q1a",
+                        "type": "boolean",
+                        "question": "Is it important that religion is important to your match?",
+                        "required": false,
+                        "default": false,
+                        "conditionalQuestions": [
+                            {
+                                "condition": {
+                                    "operator": "equals",
+                                    "value": true
+                                },
+                                "question": {
+                                    "id": "q1a1",
+                                    "type": "text",
+                                    "question": "What religion?",
+                                    "required": false
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "id": "q2",
+            "type": "multiple-choice",
+            "question": "Which programming languages do you use?",
+            "required": true,
+            "allowMultiple": true,
+            "helpText": "Select all that apply",
+            "options": [
+                {
+                    "value": "javascript",
+                    "label": "JavaScript"
+                },
+                {
+                    "value": "typescript",
+                    "label": "TypeScript"
+                },
+                {
+                    "value": "python",
+                    "label": "Python"
+                },
+                {
+                    "value": "java",
+                    "label": "Java"
+                },
+                {
+                    "value": "csharp",
+                    "label": "C#"
+                },
+                {
+                    "value": "other",
+                    "label": "Other"
+                }
+            ],
+            "conditionalQuestions": [
+                {
+                    "condition": {
+                        "operator": "contains",
+                        "value": "other"
+                    },
+                    "question": {
+                        "id": "q2a",
+                        "type": "text",
+                        "question": "Please specify other programming languages",
+                        "required": true,
+                        "validation": {
+                            "minLength": 2,
+                            "maxLength": 200
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "q3",
+            "type": "number-range",
+            "question": "What is your preferred salary range (in thousands)?",
+            "required": false,
+            "helpText": "Enter your minimum and maximum expected salary",
+            "validation": {
+                "min": 0,
+                "max": 500
+            }
+        },
+        {
+            "id": "q4",
+            "type": "date-range",
+            "question": "When are you available to start?",
+            "required": true,
+            "helpText": "Select your availability window",
+            "validation": {
+                "minDate": "today"
+            }
+        },
+        {
+            "id": "q5",
+            "type": "text",
+            "question": "Tell us about yourself",
+            "required": false,
+            "helpText": "Share your background and interests (minimum 50 characters)",
+            "validation": {
+                "minLength": 50,
+                "maxLength": 1000
+            }
+        },
+        {
+            "id": "q6",
+            "type": "number",
+            "question": "How many years of experience do you have?",
+            "required": true,
+            "validation": {
+                "min": 0,
+                "max": 70,
+                "customMessage": "Please enter a valid number of years (0-70)"
+            }
+        },
+        {
+            "id": "q7",
+            "type": "date",
+            "question": "What is your preferred start date?",
+            "required": true,
+            "validation": {
+                "minDate": "today"
+            }
+        }
+    ]
+}

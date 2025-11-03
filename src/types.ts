@@ -161,6 +161,7 @@ export interface WizardConfig {
  */
 export interface WizardState {
   currentQuestionIndex: number;
+  // currentQuestionDepth?: number;
   answers: Map<string, AnswerValue>;
   flattenedQuestions: (Question & { conditionalParent?: string })[];
   visitedQuestions: string[];

@@ -31,7 +31,7 @@ export function useWizard(questions: Question[], answers?: Answer[]) {
     return wizard.getProgress(state);
   });
   const canGoNext = computed(() => {
-    return wizard.canGoNext(state, currentQuestions.value.length);
+    return wizard.canGoNext(state);
   });
   const canGoPrevious = computed(() => {
     return wizard.canGoPrevious(state);

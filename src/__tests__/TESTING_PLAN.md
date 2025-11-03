@@ -59,6 +59,7 @@ This document outlines the comprehensive testing strategy for the Wizard Compone
 - [x] Test deep nesting (3+ levels)
 - [x] Test multiple conditional branches from same question
 - [x] Test boolean question special handling (shows conditionals before answer)
+- [x] Test boolean question special handling with deep nesting (3+ levels)
 - [x] Test answer storage and retrieval
 - [x] Test wizard reset functionality
 - [x] Test adding questions dynamically
@@ -76,6 +77,9 @@ This document outlines the comprehensive testing strategy for the Wizard Compone
   - [x] Out of bounds index
   - [x] Single question
   - [x] Question set with conditional children
+  - [x] Question set with deeply nested conditional children (3+ deep)
+  - [x] Question set with special boolean conditions handling
+  - [x] Question set with deeply nested special boolean conditions handling (3+ deep)
   - [x] Custom startIndex parameter
   - [x] Nested conditional parents
 - [x] Test `getCurrentAnswers()` for answered and unanswered questions
