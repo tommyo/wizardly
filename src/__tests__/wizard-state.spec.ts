@@ -5,12 +5,14 @@ import {
   getQuestionSet,
   getCurrentAnswers,
   next,
-  previous,
+  back,
   canGoNext,
-  canGoPrevious,
+  canGoBack,
   getProgress,
   getAnswers,
   getAnswersObject,
+  findPrevIndex,
+  findNextIndex,
 } from '../wizard-state';
 
 describe('Wizard State', () => {
@@ -280,7 +282,7 @@ describe('Wizard State', () => {
       next(state);
       expect(state.visitedQuestions.length).toBe(1);
 
-      previous(state);
+      back(state);
       next(state);
 
       expect(state.visitedQuestions.length).toBe(1);
@@ -293,6 +295,23 @@ describe('Wizard State', () => {
 
       expect(state.isComplete).toBe(true);
       expect(state.currentQuestionIndex).toBe(3);
+    });
+
+    it('should skip conditional children when moving to next question from boolean with conditionals', () => {
+      state.flattenedQuestions = [
+        { id: 'bool1', type: 'boolean', question: 'Bool 1?', required: true },
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'bool1' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'bool1' },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 0;
+
+      // next() should skip over all conditional children and go to q2
+      const result = next(state);
+
+      expect(result).toBe(true);
+      expect(state.currentQuestionIndex).toBe(3);
+      expect(state.flattenedQuestions[state.currentQuestionIndex]!.id).toBe('q2');
     });
 
     it('should return false when cannot go next', () => {
@@ -314,7 +333,7 @@ describe('Wizard State', () => {
     });
   });
 
-  describe('Navigation - previous', () => {
+  describe('Navigation - back', () => {
     beforeEach(() => {
       state.flattenedQuestions = [
         { id: 'q1', type: 'text', question: 'Q1', required: true },
@@ -323,10 +342,10 @@ describe('Wizard State', () => {
       ];
     });
 
-    it('should move to previous question', () => {
+    it('should move to back question', () => {
       state.currentQuestionIndex = 2;
 
-      const result = previous(state);
+      const result = back(state);
 
       expect(result).toBe(true);
       expect(state.currentQuestionIndex).toBe(1);
@@ -335,7 +354,7 @@ describe('Wizard State', () => {
     it('should return false when at first question', () => {
       state.currentQuestionIndex = 0;
 
-      const result = previous(state);
+      const result = back(state);
 
       expect(result).toBe(false);
       expect(state.currentQuestionIndex).toBe(0);
@@ -345,10 +364,28 @@ describe('Wizard State', () => {
       state.currentQuestionIndex = 3;
       state.isComplete = true;
 
-      const result = previous(state);
+      const result = back(state);
 
       expect(result).toBe(true);
       expect(state.currentQuestionIndex).toBe(2);
+    });
+
+    it('should land on parent boolean question when going back to question set with conditionals', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'bool1', type: 'boolean', question: 'Bool 1?', required: true },
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'bool1' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'bool1' },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 4; // On q2
+
+      // back() should skip over all conditional children and land on bool1
+      const result = back(state);
+
+      expect(result).toBe(true);
+      expect(state.currentQuestionIndex).toBe(1);
+      expect(state.flattenedQuestions[state.currentQuestionIndex]!.id).toBe('bool1');
     });
   });
 
@@ -366,9 +403,9 @@ describe('Wizard State', () => {
       expect(canGoNext(state)).toBe(true);
     });
 
-    it('should return true when at last question (can complete)', () => {
+    it('should return false when at last question (no next question)', () => {
       state.currentQuestionIndex = 2;
-      expect(canGoNext(state)).toBe(true);
+      expect(canGoNext(state)).toBe(false);
     });
 
     it('should return false when past end', () => {
@@ -382,22 +419,35 @@ describe('Wizard State', () => {
 
       expect(canGoNext(state)).toBe(false);
     });
+
+    it('should return false when last question is boolean with conditional children', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'bool1', type: 'boolean', question: 'Bool 1?', required: true },
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'bool1' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'bool1' },
+      ];
+      state.currentQuestionIndex = 1; // On bool1 (last top-level question)
+
+      // canGoNext() should return false because there's no next non-conditional question
+      expect(canGoNext(state)).toBe(false);
+    });
   });
 
-  describe('canGoPrevious', () => {
+  describe('canGoBack', () => {
     it('should return false at first question', () => {
       state.currentQuestionIndex = 0;
-      expect(canGoPrevious(state)).toBe(false);
+      expect(canGoBack(state)).toBe(false);
     });
 
     it('should return true when not at first question', () => {
       state.currentQuestionIndex = 1;
-      expect(canGoPrevious(state)).toBe(true);
+      expect(canGoBack(state)).toBe(true);
     });
 
     it('should return true even when past end', () => {
       state.currentQuestionIndex = 10;
-      expect(canGoPrevious(state)).toBe(true);
+      expect(canGoBack(state)).toBe(true);
     });
   });
 
@@ -590,7 +640,7 @@ describe('Wizard State', () => {
       next(state);
       expect(state.currentQuestionIndex).toBe(2);
 
-      previous(state);
+      back(state);
       expect(state.currentQuestionIndex).toBe(1);
     });
 
@@ -625,8 +675,8 @@ describe('Wizard State', () => {
         { id: 'q1', type: 'text', question: 'Q1', required: true },
       ];
 
-      expect(canGoPrevious(state)).toBe(false);
-      expect(canGoNext(state)).toBe(true);
+      expect(canGoBack(state)).toBe(false);
+      expect(canGoNext(state)).toBe(false);
 
       next(state);
 
@@ -643,8 +693,8 @@ describe('Wizard State', () => {
 
       next(state);
       next(state);
-      previous(state);
-      previous(state);
+      back(state);
+      back(state);
       next(state);
 
       expect(state.currentQuestionIndex).toBe(1);
@@ -689,7 +739,7 @@ describe('Wizard State', () => {
 
       // Start at beginning
       expect(state.currentQuestionIndex).toBe(0);
-      expect(canGoPrevious(state)).toBe(false);
+      expect(canGoBack(state)).toBe(false);
       expect(canGoNext(state)).toBe(true);
 
       // Answer and move forward
@@ -727,7 +777,7 @@ describe('Wizard State', () => {
       next(state);
 
       state.answers.set('q2', 'answer2');
-      previous(state);
+      back(state);
 
       // Answers should be preserved
       expect(state.answers.get('q1')).toBe('answer1');
@@ -780,7 +830,7 @@ describe('Wizard State', () => {
     it('should not duplicate visited questions', () => {
       next(state);
       next(state);
-      previous(state);
+      back(state);
       next(state);
 
       const q3Count = state.visitedQuestions.filter(id => id === 'q3').length;
@@ -793,7 +843,7 @@ describe('Wizard State', () => {
 
       const visitedBefore = [...state.visitedQuestions];
 
-      previous(state);
+      back(state);
 
       expect(state.visitedQuestions).toEqual(visitedBefore);
     });
@@ -833,6 +883,244 @@ describe('Wizard State', () => {
 
       next(state);
       expect(state.isComplete).toBe(true);
+    });
+  });
+  describe('findNextIndex', () => {
+    it('should return null when at last question', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 1;
+
+      // findNextIndex is not exported, but we can test it through canGoNext
+      expect(canGoNext(state)).toBe(false);
+    });
+
+    it('should return null when past last question', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+      ];
+      state.currentQuestionIndex = 5;
+
+      expect(canGoNext(state)).toBe(false);
+    });
+
+    it('should return next index when next question has no conditional parent', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+        { id: 'q3', type: 'text', question: 'Q3', required: true },
+      ];
+      state.currentQuestionIndex = 0;
+
+      next(state);
+      expect(state.currentQuestionIndex).toBe(1);
+    });
+
+    it('should skip over conditional children to find next non-conditional question', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'q1' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'q1' },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 0;
+
+      next(state);
+      expect(state.currentQuestionIndex).toBe(3);
+      expect(state.flattenedQuestions[state.currentQuestionIndex]!.id).toBe('q2');
+    });
+
+    it('should skip over multiple levels of nested conditionals', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'q1' },
+        { id: 'grandchild1', type: 'text', question: 'Grandchild 1?', required: true, conditionalParent: 'child1' },
+        { id: 'grandchild2', type: 'text', question: 'Grandchild 2?', required: true, conditionalParent: 'child1' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'q1' },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 0;
+
+      next(state);
+      expect(state.currentQuestionIndex).toBe(5);
+      expect(state.flattenedQuestions[state.currentQuestionIndex]!.id).toBe('q2');
+    });
+
+    it('should return null when all remaining questions are conditional', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'q1' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'q1' },
+      ];
+      state.currentQuestionIndex = 0;
+
+      expect(canGoNext(state)).toBe(false);
+    });
+
+    it('should handle empty questions array', () => {
+      state.flattenedQuestions = [];
+      state.currentQuestionIndex = 0;
+
+      expect(canGoNext(state)).toBe(false);
+    });
+
+    it('should handle single question', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+      ];
+      state.currentQuestionIndex = 0;
+
+      expect(canGoNext(state)).toBe(false);
+    });
+
+    it('should skip conditionals with different parent references', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'q1' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'someOtherParent' },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 0;
+
+      next(state);
+      // Should skip both conditionals and land on q2
+      expect(state.currentQuestionIndex).toBe(3);
+      expect(state.flattenedQuestions[state.currentQuestionIndex]!.id).toBe('q2');
+    });
+  });
+
+  describe('findPrevIndex', () => {
+    it('should return null when at first question', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 0;
+
+      expect(findPrevIndex(state)).toBe(null);
+    });
+
+    it('should return null when index is less than 1', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+      ];
+      state.currentQuestionIndex = 0;
+
+      expect(findPrevIndex(state)).toBe(null);
+    });
+
+    it('should return previous index when previous question has no conditional parent', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+        { id: 'q3', type: 'text', question: 'Q3', required: true },
+      ];
+      state.currentQuestionIndex = 2;
+
+      expect(findPrevIndex(state)).toBe(1);
+    });
+
+    it('should return the previously visited question when not a special boolean non-conditional question', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'q1' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'q1' },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 3;
+
+      expect(findPrevIndex(state)).toBe(2);
+      expect(state.flattenedQuestions[state.currentQuestionIndex]!.id).toBe('child2');
+    });
+
+    it('should return the next question when not a special boolean non-conditional question', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'q1' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'q1' },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 3;
+
+      expect(findPrevIndex(state)).toBe(2);
+      expect(state.flattenedQuestions[state.currentQuestionIndex]!.id).toBe('child2');
+    });
+
+    it('should skip over multiple levels of nested conditionals', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'q1' },
+        { id: 'grandchild1', type: 'text', question: 'Grandchild 1?', required: true, conditionalParent: 'child1' },
+        { id: 'grandchild2', type: 'text', question: 'Grandchild 2?', required: true, conditionalParent: 'child1' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'q1' },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 5;
+
+      back(state);
+      expect(state.currentQuestionIndex).toBe(0);
+      expect(state.flattenedQuestions[state.currentQuestionIndex]!.id).toBe('q1');
+    });
+
+    it('should return null when all previous questions are conditional', () => {
+      state.flattenedQuestions = [
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'someParent' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'someParent' },
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+      ];
+      state.currentQuestionIndex = 2;
+
+      expect(canGoBack(state)).toBe(false);
+    });
+
+    it('should handle going back from completed state', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 2;
+      state.isComplete = true;
+
+      back(state);
+      expect(state.currentQuestionIndex).toBe(1);
+    });
+
+    it('should skip conditionals with different parent references', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'q1' },
+        { id: 'child2', type: 'text', question: 'Child 2?', required: true, conditionalParent: 'someOtherParent' },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 3;
+
+      back(state);
+      // Should skip both conditionals and land on q1
+      expect(state.currentQuestionIndex).toBe(0);
+      expect(state.flattenedQuestions[state.currentQuestionIndex]!.id).toBe('q1');
+    });
+
+    it('should handle boundary case at index 1', () => {
+      state.flattenedQuestions = [
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+        { id: 'q2', type: 'text', question: 'Q2', required: true },
+      ];
+      state.currentQuestionIndex = 1;
+
+      back(state);
+      expect(state.currentQuestionIndex).toBe(0);
+    });
+
+    it('should return null when starting from conditional at index 1', () => {
+      state.flattenedQuestions = [
+        { id: 'child1', type: 'text', question: 'Child 1?', required: true, conditionalParent: 'someParent' },
+        { id: 'q1', type: 'text', question: 'Q1', required: true },
+      ];
+      state.currentQuestionIndex = 1;
+
+      expect(canGoBack(state)).toBe(false);
     });
   });
 });

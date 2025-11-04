@@ -125,7 +125,7 @@ const {
   currentAnswers,
   progress,
   canGoNext,
-  canGoPrevious,
+  canGoBack,
   answerQuestions,
   goBack,
   complete,
@@ -159,7 +159,7 @@ const handleComplete = () => {
     </div>
     
     <div class="actions">
-      <button @click="goBack" :disabled="!canGoPrevious">Back</button>
+      <button @click="goBack" :disabled="!canGoBack">Back</button>
       <button @click="handleSubmit" :disabled="!canGoNext">Next</button>
       <button v-if="isComplete" @click="handleComplete">Complete</button>
     </div>
@@ -461,7 +461,7 @@ const {
   // Computed
   progress,             // { current, total, percentage }
   canGoNext,           // boolean - Can navigate forward
-  canGoPrevious,       // boolean - Can navigate backward
+  canGoBack,       // boolean - Can navigate backward
   
   // Methods
   answerQuestions,     // (questions, answers) => ValidationResult[]
@@ -640,7 +640,7 @@ const {
   currentAnswers,
   progress,
   canGoNext,
-  canGoPrevious,
+  canGoBack,
   isComplete,
   answerQuestions,
   goBack,
@@ -713,7 +713,7 @@ const handleComplete = () => {
     <div class="actions">
       <button 
         @click="goBack" 
-        :disabled="!canGoPrevious"
+        :disabled="!canGoBack"
       >
         Back
       </button>

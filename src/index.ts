@@ -33,7 +33,7 @@ export {
   getCurrentAnswers,
   getProgress,
   canGoNext,
-  canGoPrevious,
+  canGoBack,
   next,
   previous,
   getAnswers,

@@ -33,15 +33,20 @@ export function useWizard(questions: Question[], answers?: Answer[]) {
   const canGoNext = computed(() => {
     return wizard.canGoNext(state);
   });
-  const canGoPrevious = computed(() => {
-    return wizard.canGoPrevious(state);
+  const canGoBack = computed(() => {
+    return wizard.canGoBack(state);
   });
 
   /**
-   * Submit the current answers and move on.
+   * Submit the current answers and optionally advance.
    * Returns validation results for each answer.
+   * @param autoAdvance - If true, automatically advances to next question after successful validation (default: true)
    */
-  const answerQuestions = (questions: Question[], answers: (AnswerValue | undefined)[]): ValidationResult[] => {
+  const answerQuestions = (
+    questions: Question[],
+    answers: (AnswerValue | undefined)[],
+    autoAdvance = true,
+  ): ValidationResult[] => {
     // Clear previous errors
     validationErrors.value.clear();
 
@@ -66,7 +71,9 @@ export function useWizard(questions: Question[], answers?: Answer[]) {
 
     if (allValid) {
       engine.answerQuestions(state, toSubmit, false);
-      wizard.next(state);
+      if (autoAdvance) {
+        wizard.next(state);
+      }
     }
 
     return validationResults;
@@ -75,14 +82,14 @@ export function useWizard(questions: Question[], answers?: Answer[]) {
   /**
    * Go to the previous question
    */
-  const goBack = (): boolean => {
-    return wizard.previous(state);
+  const back = (): boolean => {
+    return wizard.back(state);
   };
 
   /**
    * Skip the current question (only if not required)
    */
-  const skipQuestion = (): boolean => {
+  const next = (): boolean => {
     return wizard.next(state);
   };
 
@@ -95,6 +102,11 @@ export function useWizard(questions: Question[], answers?: Answer[]) {
    * Get answers as object
    */
   const getAnswersObject = () => wizard.getAnswersObject(state);
+
+  /**
+   * Get answered questions
+   */
+  const getAnsweredQuestions = () => wizard.getAnsweredQuestions(state);
 
   /**
    * Reset the wizard. Can also be used to load answers from a previous session
@@ -137,14 +149,15 @@ export function useWizard(questions: Question[], answers?: Answer[]) {
     // Computed
     progress,
     canGoNext,
-    canGoPrevious,
+    canGoBack,
 
     // Methods
     answerQuestions,
-    goBack,
-    skipQuestion,
+    back,
+    next,
     getAnswers,
     getAnswersObject,
+    getAnsweredQuestions,
     reset,
     complete,
     getValidationError,

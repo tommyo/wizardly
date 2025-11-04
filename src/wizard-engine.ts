@@ -105,7 +105,6 @@ export class WizardEngine {
       let isValid = !validate;
       if (question) {
         if (validate) {
-
           const result = validateAnswer(question, answer.value);
           validationResults.push(result);
           isValid = result.isValid;

@@ -133,8 +133,8 @@ describe('useWizard Composable', () => {
       expect(wizard.isComplete.value).toBe(false);
 
       wizard.answerQuestions(wizard.currentQuestions.value, ['answer']);
-      // At q3, can still go next (to complete)
-      expect(wizard.canGoNext.value).toBe(true);
+      // At q3 (last question), cannot go next
+      expect(wizard.canGoNext.value).toBe(false);
       expect(wizard.isComplete.value).toBe(false);
 
       wizard.answerQuestions(wizard.currentQuestions.value, ['answer']);
@@ -144,7 +144,7 @@ describe('useWizard Composable', () => {
       expect(wizard.isComplete.value).toBe(true);
     });
 
-    it('should have reactive canGoPrevious', () => {
+    it('should have reactive canGoBack', () => {
       const questions: Question[] = [
         { id: 'q1', type: 'text', question: 'Q1', required: true },
         { id: 'q2', type: 'text', question: 'Q2', required: true },
@@ -152,11 +152,11 @@ describe('useWizard Composable', () => {
 
       const wizard = useWizard(questions);
 
-      expect(wizard.canGoPrevious.value).toBe(false);
+      expect(wizard.canGoBack.value).toBe(false);
 
       wizard.answerQuestions(wizard.currentQuestions.value, ['answer']);
 
-      expect(wizard.canGoPrevious.value).toBe(true);
+      expect(wizard.canGoBack.value).toBe(true);
     });
   });
 
@@ -340,7 +340,7 @@ describe('useWizard Composable', () => {
       wizard.answerQuestions(wizard.currentQuestions.value, ['answer']);
       expect(wizard.currentQuestions.value[0]!.id).toBe('q2');
 
-      const result = wizard.goBack();
+      const result = wizard.back();
 
       expect(result).toBe(true);
       expect(wizard.currentQuestions.value[0]!.id).toBe('q1');
@@ -353,7 +353,7 @@ describe('useWizard Composable', () => {
 
       const wizard = useWizard(questions);
 
-      const result = wizard.goBack();
+      const result = wizard.back();
 
       expect(result).toBe(false);
       expect(wizard.currentQuestions.value[0]!.id).toBe('q1');
@@ -367,7 +367,7 @@ describe('useWizard Composable', () => {
 
       const wizard = useWizard(questions);
 
-      const result = wizard.skipQuestion();
+      const result = wizard.next();
 
       expect(result).toBe(true);
       expect(wizard.currentQuestions.value[0]!.id).toBe('q2');
@@ -610,12 +610,12 @@ describe('useWizard Composable', () => {
 
       // Start
       expect(wizard.isComplete.value).toBe(false);
-      expect(wizard.canGoPrevious.value).toBe(false);
+      expect(wizard.canGoBack.value).toBe(false);
 
       // Answer Q1
       wizard.answerQuestions(wizard.currentQuestions.value, ['John']);
       expect(wizard.progress.value.current).toBe(2);
-      expect(wizard.canGoPrevious.value).toBe(true);
+      expect(wizard.canGoBack.value).toBe(true);
 
       // Answer Q2
       wizard.answerQuestions(wizard.currentQuestions.value, [25]);
@@ -658,12 +658,16 @@ describe('useWizard Composable', () => {
 
       const wizard = useWizard(questions);
 
-      // Answer as student
-      wizard.answerQuestions(wizard.currentQuestions.value, ['student']);
-      expect(wizard.currentQuestions.value[0]!.id).toBe('school');
+      // Answer as student without auto-advance to see the conditional question
+      wizard.answerQuestions(wizard.currentQuestions.value, ['student'], false);
+      // After answering, the conditional 'school' is added to flattenedQuestions
+      // currentQuestions now includes both user_type and school
+      expect(wizard.currentQuestions.value.length).toBe(2);
+      expect(wizard.currentQuestions.value[0]!.id).toBe('user_type');
+      expect(wizard.currentQuestions.value[1]!.id).toBe('school');
 
-      // Answer school
-      wizard.answerQuestions(wizard.currentQuestions.value, ['MIT']);
+      // Answer school (with auto-advance to move to next top-level question)
+      wizard.answerQuestions(wizard.currentQuestions.value, ['student', 'MIT']);
       expect(wizard.currentQuestions.value[0]!.id).toBe('final');
 
       // Answer final
@@ -690,10 +694,10 @@ describe('useWizard Composable', () => {
       wizard.answerQuestions(wizard.currentQuestions.value, ['a1']);
       wizard.answerQuestions(wizard.currentQuestions.value, ['a2']);
 
-      wizard.goBack();
+      wizard.back();
       expect(wizard.currentQuestions.value[0]!.id).toBe('q2');
 
-      wizard.goBack();
+      wizard.back();
       expect(wizard.currentQuestions.value[0]!.id).toBe('q1');
 
       wizard.answerQuestions(wizard.currentQuestions.value, ['updated']);
@@ -826,8 +830,8 @@ describe('useWizard Composable', () => {
       expect(wizard.canGoNext.value).toBe(true);
 
       wizard.answerQuestions(wizard.currentQuestions.value, ['answer']);
-      // At q3, can still go next (to complete)
-      expect(wizard.canGoNext.value).toBe(true);
+      // At q3 (last question), cannot go next
+      expect(wizard.canGoNext.value).toBe(false);
 
       wizard.answerQuestions(wizard.currentQuestions.value, ['answer']);
       // After completion
@@ -836,7 +840,7 @@ describe('useWizard Composable', () => {
       // This is because: currentQuestionIndex(3) + 0 <= flattenedQuestions.length(3)
     });
 
-    it('should compute canGoPrevious correctly', () => {
+    it('should compute canGoBack correctly', () => {
       const questions: Question[] = [
         { id: 'q1', type: 'text', question: 'Q1', required: true },
         { id: 'q2', type: 'text', question: 'Q2', required: true },
@@ -844,11 +848,11 @@ describe('useWizard Composable', () => {
 
       const wizard = useWizard(questions);
 
-      expect(wizard.canGoPrevious.value).toBe(false);
+      expect(wizard.canGoBack.value).toBe(false);
 
       wizard.answerQuestions(wizard.currentQuestions.value, ['answer']);
 
-      expect(wizard.canGoPrevious.value).toBe(true);
+      expect(wizard.canGoBack.value).toBe(true);
     });
 
     it('should handle currentQuestions with question sets', () => {

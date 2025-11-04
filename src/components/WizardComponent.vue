@@ -26,7 +26,7 @@ const {
   currentAnswers,
   progress,
   isComplete,
-  canGoPrevious,
+  canGoBack,
   canGoNext,
 } = wizard;
 
@@ -42,7 +42,8 @@ watchEffect(() => {
 });
 
 const saveAnswers = () => {
-  const results = wizard.answerQuestions(currentQuestions.value, answers.value);
+  // Don't auto-advance to allow conditional questions to be shown
+  const results = wizard.answerQuestions(currentQuestions.value, answers.value, false);
 
   // Check if all validations passed
   return results.every(r => r.isValid);
@@ -82,6 +83,7 @@ const isRequiredAnswered = computed(() => {
 });
 
 const next = () => {
+  console.log(isComplete.value);
   // Save answers and check if validation passed
   const isValid = saveAnswers();
 
@@ -89,6 +91,8 @@ const next = () => {
     // Don't proceed if validation failed
     return;
   }
+
+  wizard.next();
 
   answers.value = [];
 
@@ -102,6 +106,10 @@ const next = () => {
 
 <template>
   <div class="wizard-container">
+    <pre>
+      <template v-for="{ question, answer } in wizard.getAnsweredQuestions()" :key="question.id">{{ question.question }} = {{ `${answer}\n` }}</template>
+      <template v-for="(a, i) in currentAnswers" :key="`a${i}`">{{ currentQuestions[i]?.question }} = {{ `${a}\n` }}</template>
+    </pre>
     <!-- Wizard Content -->
     <div class="wizard-content">
       <!-- Progress Bar -->
@@ -241,11 +249,11 @@ const next = () => {
 
       <!-- Navigation Buttons -->
       <div class="wizard-navigation">
-        <button @click="wizard.goBack()" :disabled="!canGoPrevious" class="prev">
+        <button @click="wizard.back()" :disabled="!canGoBack" class="prev">
           Back
         </button>
 
-        <button v-if="!isRequired" @click="wizard.skipQuestion()" class="next">
+        <button v-if="!isRequired" @click="wizard.next()" class="next">
           Skip
         </button>
 

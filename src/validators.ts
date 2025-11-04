@@ -198,7 +198,7 @@ function validateDate(value: string, validation: Validation): ValidationResult {
     let minDate: number;
     if (validation.minDate === 'today') {
       const today = new Date();
-      minDate = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+      minDate = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
     } else {
       const minDateObj = new Date(validation.minDate);
       minDate = Date.UTC(minDateObj.getUTCFullYear(), minDateObj.getUTCMonth(), minDateObj.getUTCDate());
@@ -222,7 +222,7 @@ function validateDate(value: string, validation: Validation): ValidationResult {
     let maxDate: number;
     if (validation.maxDate === 'today') {
       const today = new Date();
-      maxDate = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+      maxDate = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
     } else {
       const maxDateObj = new Date(validation.maxDate);
       maxDate = Date.UTC(maxDateObj.getUTCFullYear(), maxDateObj.getUTCMonth(), maxDateObj.getUTCDate());

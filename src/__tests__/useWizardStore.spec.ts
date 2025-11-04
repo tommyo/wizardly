@@ -134,7 +134,7 @@ describe('useWizardStore', () => {
       expect(store.isComplete).toBeDefined();
       expect(store.progress).toBeDefined();
       expect(store.canGoNext).toBeDefined();
-      expect(store.canGoPrevious).toBeDefined();
+      expect(store.canGoBack).toBeDefined();
     });
 
     it('should inherit all properties from useWizard composable', () => {
@@ -149,12 +149,12 @@ describe('useWizardStore', () => {
       // Computed properties
       expect(store.progress).toBeDefined();
       expect(store.canGoNext).toBeDefined();
-      expect(store.canGoPrevious).toBeDefined();
+      expect(store.canGoBack).toBeDefined();
 
       // Methods
       expect(typeof store.answerQuestions).toBe('function');
-      expect(typeof store.goBack).toBe('function');
-      expect(typeof store.skipQuestion).toBe('function');
+      expect(typeof store.back).toBe('function');
+      expect(typeof store.next).toBe('function');
       expect(typeof store.getAnswers).toBe('function');
       expect(typeof store.getAnswersObject).toBe('function');
       expect(typeof store.reset).toBe('function');
@@ -310,12 +310,12 @@ describe('useWizardStore', () => {
         expect(typeof store.canGoNext).toBe('boolean');
       });
 
-      it('should have working canGoPrevious computed property', () => {
+      it('should have working canGoBack computed property', () => {
         const storeDefinition = useWizardStore('prev-test', config);
         const store = storeDefinition();
 
-        expect(typeof store.canGoPrevious).toBe('boolean');
-        expect(store.canGoPrevious).toBe(false); // Should be false at start
+        expect(typeof store.canGoBack).toBe('boolean');
+        expect(store.canGoBack).toBe(false); // Should be false at start
       });
 
       it('should have working answerQuestions method', () => {
@@ -338,15 +338,15 @@ describe('useWizardStore', () => {
         store.answerQuestions(store.currentQuestions, ['Test']);
 
         // Now we should be able to go back
-        const result = store.goBack();
+        const result = store.back();
         expect(typeof result).toBe('boolean');
       });
 
-      it('should have working skipQuestion method', () => {
+      it('should have working next method', () => {
         const storeDefinition = useWizardStore('skip-test', config);
         const store = storeDefinition();
 
-        const result = store.skipQuestion();
+        const result = store.next();
         expect(typeof result).toBe('boolean');
       });
 
@@ -579,7 +579,7 @@ describe('useWizardStore', () => {
           for (let i = 0; i < 10; i++) {
             store.answerQuestions(store.currentQuestions, [`Answer ${i}`]);
             if (i < 9) {
-              store.goBack(); // Go back to update the same question again
+              store.back(); // Go back to update the same question again
             }
           }
 
@@ -604,8 +604,8 @@ describe('useWizardStore', () => {
 
           // These should all be properly typed
           expect(typeof store.answerQuestions).toBe('function');
-          expect(typeof store.goBack).toBe('function');
-          expect(typeof store.skipQuestion).toBe('function');
+          expect(typeof store.back).toBe('function');
+          expect(typeof store.next).toBe('function');
           expect(typeof store.getAnswers).toBe('function');
           expect(typeof store.getAnswersObject).toBe('function');
           expect(typeof store.reset).toBe('function');
@@ -630,7 +630,7 @@ describe('useWizardStore', () => {
           expect(typeof store.isComplete).toBe('boolean');
           expect(typeof store.progress).toBe('object');
           expect(typeof store.canGoNext).toBe('boolean');
-          expect(typeof store.canGoPrevious).toBe('boolean');
+          expect(typeof store.canGoBack).toBe('boolean');
         });
       });
     });

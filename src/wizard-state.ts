@@ -1,12 +1,13 @@
 import type {
   Answer,
+  AnsweredQuestion,
   AnswerValue,
   ProgressReport,
   Question,
   WizardState,
 } from './types';
 
-function findPrevIndex(state: WizardState) {
+export function findPrevIndex(state: WizardState) {
   if (state.currentQuestionIndex < 1) {
     return null;
   }
@@ -20,7 +21,7 @@ function findPrevIndex(state: WizardState) {
   return null;
 }
 
-function findNextIndex(state: WizardState) {
+export function findNextIndex(state: WizardState) {
   const last = state.flattenedQuestions.length - 1;
   if (state.currentQuestionIndex >= last) {
     return null;
@@ -91,12 +92,10 @@ export function getCurrentAnswers(
 export function next(state: WizardState): boolean {
   const newIndex = findNextIndex(state);
   if (newIndex === null) {
-    return false;
-  }
-
-  // Check if wizard is complete
-  if (newIndex >= state.flattenedQuestions.length) {
+    // No more questions - mark as complete
     state.isComplete = true;
+    state.currentQuestionIndex = state.flattenedQuestions.length;
+    return false;
   }
 
   const isNow = state.flattenedQuestions[newIndex];
@@ -111,13 +110,13 @@ export function next(state: WizardState): boolean {
 /**
  * Move to the previous question
  */
-export function previous(state: WizardState): boolean {
+export function back(state: WizardState): boolean {
   const newIndex = findPrevIndex(state);
   if (newIndex === null) {
     return false;
   }
   state.currentQuestionIndex = newIndex;
-  return false;
+  return true;
 }
 
 /**
@@ -131,7 +130,7 @@ export function canGoNext(state: WizardState): boolean {
 /**
  * Check if we can go to the previous question
  */
-export function canGoPrevious(state: WizardState): boolean {
+export function canGoBack(state: WizardState): boolean {
   const prev = findPrevIndex(state);
   return prev !== null;
 }
@@ -145,7 +144,7 @@ export function getProgress(state: WizardState): ProgressReport {
   const percentage = total > 0 ? (current / total) * 100 : 0;
 
   return { current, total, percentage };
-}
+};
 
 /**
  * Get all answers as an array of Answer objects.
@@ -169,4 +168,16 @@ export function getAnswersObject(state: WizardState): Record<string, AnswerValue
     obj[questionId] = value;
   });
   return obj;
+}
+
+export function getAnsweredQuestions(state: WizardState): AnsweredQuestion[] {
+  const res: AnsweredQuestion[] = [];
+  const answers = getAnswersObject(state);
+  state.flattenedQuestions.forEach((question) => {
+    const answer = answers[question.id];
+    if (answer !== undefined) {
+      res.push({ question, answer });
+    }
+  });
+  return res;
 }

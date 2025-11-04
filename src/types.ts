@@ -149,6 +149,11 @@ export interface Answer<T extends QuestionType = QuestionType> {
   value: T extends QuestionType ? AnswerValueMap[T] : never;
 }
 
+export interface AnsweredQuestion<T extends QuestionType = QuestionType> {
+  question: Question<T>;
+  answer: AnswerValueMap[T];
+}
+
 export interface WizardConfig {
   wizardId: string;
   title: string;

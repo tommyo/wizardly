@@ -88,12 +88,15 @@ This document outlines the comprehensive testing strategy for the Wizard Compone
   - [x] Tracking visited questions
   - [x] Completion detection
   - [x] Boundary conditions
+  - [x] Moving to next question when boolean with conditional children
 - [x] Test `previous()` navigation
   - [x] Moving to previous question
   - [x] Boundary conditions at start
   - [x] Navigation from completed state
-- [x] Test `canGoNext()` with count parameter
-- [x] Test `canGoPrevious()` boundary conditions
+  - [x] Moving to previous when previous is boolean with conditional children
+- [x] Test `canGoNext()`
+  - [x] Test `canGoNext()` when the last question is boolean with conditional children
+- [x] Test `canGoBack()` boundary conditions
 - [x] Test `getProgress()` calculation
   - [x] At start, middle, and end
   - [x] Empty questions
@@ -105,6 +108,27 @@ This document outlines the comprehensive testing strategy for the Wizard Compone
 - [x] Test visited questions tracking (no duplicates)
 - [x] Test edge cases (special characters, zero values, empty strings)
 - [x] Test complete wizard flow integration
+- [x] Test `findNextIndex()` helper function
+  - [x] Returns null when at last question
+  - [x] Returns null when past last question
+  - [x] Returns next index for non-conditional questions
+  - [x] Skips over conditional children
+  - [x] Skips over multiple levels of nested conditionals
+  - [x] Returns null when all remaining questions are conditional
+  - [x] Handles empty questions array
+  - [x] Handles single question
+  - [x] Skips conditionals with different parent references
+- [x] Test `findPrevIndex()` helper function
+  - [x] Returns null when at first question
+  - [x] Returns null when index is less than 1
+  - [x] Returns previous index for non-conditional questions
+  - [x] Skips over conditional children
+  - [x] Skips over multiple levels of nested conditionals
+  - [x] Returns null when all previous questions are conditional
+  - [x] Handles going back from completed state
+  - [x] Skips conditionals with different parent references
+  - [x] Handles boundary case at index 1
+  - [x] Returns null when starting from conditional at index 1
 
 ### 4. Composable Tests
 
@@ -118,7 +142,7 @@ This document outlines the comprehensive testing strategy for the Wizard Compone
   - [x] isComplete reactivity
   - [x] progress reactivity
   - [x] canGoNext reactivity
-  - [x] canGoPrevious reactivity
+  - [x] canGoBack reactivity
 - [x] Test answer submission
   - [x] Valid answers advance
   - [x] Invalid answers don't advance
@@ -171,7 +195,7 @@ This document outlines the comprehensive testing strategy for the Wizard Compone
   - [x] Test isComplete computed property works in store context
   - [x] Test progress computed property works in store context
   - [x] Test canGoNext computed property works in store context
-  - [x] Test canGoPrevious computed property works in store context
+  - [x] Test canGoBack computed property works in store context
   - [x] Test answerQuestions method works in store context
   - [x] Test goBack method works in store context
   - [x] Test skipQuestion method works in store context
